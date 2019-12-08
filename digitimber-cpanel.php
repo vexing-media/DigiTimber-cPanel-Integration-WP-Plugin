@@ -130,7 +130,7 @@ function connectToCpanel() {
 		dt_error_notice("cPanel credentials appear to be missing, please check your <a href=\"?page=dt-cpanel-settings\">settings</a>.");
 		exit;
 	}
-	$cPanel = new cpanelAPI(dtcrypt($options['cpun']), dtcrypt($options['cppw']), '127.0.0.1');
+	$cPanel = new DTWP_HTTP_cPanelAPI(dtcrypt($options['cpun']), dtcrypt($options['cppw']), '127.0.0.1');
 	$checkvalid = $cPanel->uapi->LastLogin->get_last_or_current_logged_in_ip(); 
 	if (isset($checkvalid) && $checkvalid != '') {
 		return $cPanel;
