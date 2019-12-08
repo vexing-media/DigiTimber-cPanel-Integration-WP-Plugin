@@ -23,7 +23,7 @@ along with DigiTimber Integration Plugin for cPanel. If not, see https://www.gnu
 */
 
 
-require_once("cpaneluapi.class.php");
+require_once("dtcpaneluapi.class.php");
 
 register_uninstall_hook(__FILE__, 'uninstallPlugin');
 add_action( 'admin_menu', 'digitimber_cpanel_menu' );  

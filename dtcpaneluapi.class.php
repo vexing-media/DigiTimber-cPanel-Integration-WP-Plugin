@@ -242,7 +242,7 @@ class DTWP_HTTP_cPanelAPI
 		);
 		$content = wp_remote_post($url, $pload);
 	} else {
-		$content = wp_remote_get($url, array('headers' => $httpHeaders,'cookies' => array());
+		$content = wp_remote_get($url, array('headers' => $httpHeaders,'cookies' => array()));
 	}
 
         return $content;
