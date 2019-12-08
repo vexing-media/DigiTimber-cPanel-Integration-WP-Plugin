@@ -47,6 +47,7 @@ Not at this time.
 - ADDED: Created this file, readme.txt
 - ADDED: Addon Email management - lists Emails / add new email accounts / modify email accounts / delete email accounts
 - UPDATED: Encrypt cPanel credentials for storage in the database using AES-256 with generated key and iv
+- ADDED: New Github repo
 
 = 1.1.0 = 12/8/2019
 - INFO: Added 3rd version identifier for security and patch updates. New format is Major.Minor.Patch
