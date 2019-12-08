@@ -224,24 +224,27 @@ class DTWP_HTTP_cPanelAPI
 
         $httpHeaders = array("Authorization: Basic " . $this->auth);
         //If we have a token then send that with the request for 2FA.
-        if ($this->token) {
-            $httpHeaders[] = "X-CPANEL-OTP: " . $this->token;
-        }
-        $httpHeaders[] = "Content-type: multipart/form-data";
+	if ($this->token) {
+        	$httpHeaders[] = "X-CPANEL-OTP: " . $this->token;
+	}
+        if($this->httpMethod == 'POST'){
+	        $httpHeaders[] = "Content-type: multipart/form-data";
+		
+		$pload = array(
+		'method' => 'POST',
+		'timeout' => 30,
+		'redirection' => 5,
+		'httpversion' => '1.0',
+		'blocking' => true,
+		'headers' => $httpHeaders,
+		'body' => $this->postData,
+		'cookies' => array()
+		);
+		$content = wp_remote_post($url, $pload);
+	} else {
+		$content = wp_remote_get($url, array('headers' => $httpHeaders,'cookies' => array());
+	}
 
-
-	$pload = array(
-	'method' => 'POST',
-	'timeout' => 30,
-	'redirection' => 5,
-	'httpversion' => '1.0',
-	'blocking' => true,
-	'headers' => $httpHeaders,
-	'body' => $this->postData,
-	'cookies' => array()
-	);
-
-	$content = wp_remote_post($url, $pload);
         return $content;
     }
 
