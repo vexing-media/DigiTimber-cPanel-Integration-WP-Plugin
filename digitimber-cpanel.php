@@ -3,7 +3,7 @@
 Plugin Name: DigiTimber Integration Plugin for cPanel
 Plugin URI: http://www.digitimber.com/cpanel-wordpress-plugin
 Description: Access basic cPanel functions (currently limited to email) from within WordPress. This allows your customers to use the interface that they already know and love to perform basic admin tasks.
-Version: 1.2.2
+Version: 1.2.2a
 Author: DigiTimber
 Author URI: http://www.digitimber.com/
 License:     GPL2
