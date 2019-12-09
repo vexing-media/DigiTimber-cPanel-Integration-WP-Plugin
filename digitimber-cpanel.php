@@ -3,7 +3,7 @@
 Plugin Name: DigiTimber cPanel Integration
 Plugin URI: https://github.com/vexing-media/DigiTimber-cPanel-Integration-WP-Plugin
 Description: Access basic cPanel functions (currently limited to email) from within WordPress. This allows your customers to use the interface that they already know and love to perform basic admin tasks.
-Version: 1.3.1
+Version: 1.3.2
 Author: DigiTimber
 Author URI: http://www.digitimber.com/
 License: GPL2
@@ -65,7 +65,7 @@ function dt_cpanel_main_page() {
 	<p><H3>= Do you make any other plugins? =</p>
 	<p>Not at this time.</p>
 	<p><H2>== Changelog ==</h2></p>
-	<p><B>= 1.3.1 = 12/9/2019</b><br />- INFO: After submission to WP Plugin Directory, we had a few things to fix<br />- UPDATED: Changed the overall name of the plugin to DigiTimber cPanel Integration<br />- UPDATED: Including your own CURL code - Removed old curl library and wrote our own based on the WP HTTP api<br />- UPDATED: Generic function (and/or define) names - removed old function names that were not very specific and added (hopefully) appropriate naming<br />- UPDATED: Please sanitize, escape, and validate your POST calls - reviewed all input and applied applicable sanitation or encoding</p>
+	<p><B>= 1.3.2 = 12/9/2019</b><br />- INFO: After submission to WP Plugin Directory, we had a few things to fix<br />- UPDATED: Changed the overall name of the plugin to DigiTimber cPanel Integration<br />- UPDATED: Including your own CURL code - Removed old curl library and wrote our own based on the WP HTTP api<br />- UPDATED: Generic function (and/or define) names - removed old function names that were not very specific and added (hopefully) appropriate naming<br />- UPDATED: Please sanitize, escape, and validate your POST calls - reviewed all input and applied applicable sanitation or encoding<br />- UPDATED: Nonces and user permissions - added wp required nonce fields and validation to user input forms</p>
 	<p><B>= 1.2.2 = 12/8/2019</b><br />- INFO: Initial Submission to WordPress Official Plugins List<br />- ADDED: Created this file, readme.txt<br />- ADDED: Addon Email management - lists Emails / add new email accounts / modify email accounts / delete email accounts<br />- UPDATED: Encrypt cPanel credentials for storage in the database using AES-256 with generated key and iv<br />- ADDED: New Github repo</p>
 	<p><B>= 1.1.0 = 12/8/2019</b><br />- INFO: Added 3rd version identifier for security and patch updates. New format is Major.Minor.Patch<br />- UPDATED: Encrypt cPanel credentials for storage in the database using basic encryption and static key and iv</p>
 	<p><B>= 1.0 = 12/1/2019</b><br />- ADDED: Email listings - ability to add and delete<br />- ADDED: First savings of settings in database, plain text<br />- INFO: First Release</p>
@@ -98,6 +98,8 @@ function dt_cpanel_settings_page() {
 	$options = get_option( 'cpanel_settings' );
 	echo "<h2>" . __( 'Settings Page', 'dt-cpanel-settings-page' ) . "</h2><BR>";
 	if (isset($_POST['settings_update']) && $_POST['settings_update'] == 1) {
+		if ( !isset($_POST['settings_update_nonce']) || !wp_verify_nonce($_POST['settings_update_nonce'], 'settings_update_nonce')) 
+		   dt_cpanel_error_notice("Sorry, we can't seem to validate that this request was submitted correctly. Please check your settings and try again.",1);
 		echo "<B>Updating settings, please wait...</b><BR>";
 		update_option( 'cpanel_settings', array("cpun"=>dt_cpanel_crypt(sanitize_user($_POST['cpun']),1),'cppw'=>dt_cpanel_crypt(urlencode($_POST['cppw']),1)), '', 'yes' );
         	echo("<meta http-equiv='refresh' content='0'>");
@@ -110,6 +112,7 @@ function dt_cpanel_settings_page() {
 			<th scope="row">cPanel Username:</th><td><input type="text" name="cpun" value="<? echo $cpun_value; ?>"></td><BR>
 			<th scope="row">cPanel Password:</th><td><input type="password" name="cppw" value="<? echo $cppw_value; ?>"></td>
 			<input type=hidden name=settings_update value=1><?
+			wp_nonce_field( 'settings_update_nonce', 'settings_update_nonce' );
 			submit_button();
 		echo "</form>";
 	}
@@ -143,6 +146,8 @@ function dt_cpanel_email() {
     
 	// Delete Operation Submitted
 	if (isset($_POST['delete']) && $_POST['delete'] == 1) {
+		if ( !isset($_POST['delete_nonce']) || !wp_verify_nonce($_POST['delete_nonce'], 'dt-cpanel-email-delete')) 
+		   dt_cpanel_error_notice("Sorry, we can't seem to validate that this request was submitted correctly. Please check your settings and try again.",1);
 		$_POST['delemail'] = sanitize_email($_POST['delemail']);
 		list($user, $domain) = explode('@', $_POST['delemail']);
         	echo "<BR><B>Attempting to delete $user@$domain, please wait...</b><BR>";
@@ -158,6 +163,8 @@ function dt_cpanel_email() {
 
 	// Create Operation Submitted
 	if (isset($_POST['create']) && $_POST['create'] == 1) {
+		if ( !isset($_POST['create_nonce']) || !wp_verify_nonce($_POST['create_nonce'], 'dt-cpanel-email-create')) 
+		   dt_cpanel_error_notice("Sorry, we can't seem to validate that this request was submitted correctly. Please check your settings and try again.",1);
 		if (isset($_POST['password']) && $_POST['password'] != '')
 			$pass = $_POST['password'];
 		else {
@@ -208,15 +215,21 @@ function dt_cpanel_email() {
 		}
 		echo "<BR><table width=50%>";
 		echo "<tr class=border_bottom><td width=200px><B>Email Account</b></td><td>New Password</td><td><b>Quota in MB</b></td><td></td><td></td></tr>";
-	   	echo "<form method=post><tr><td valign=top>$user@$domain<input type=hidden name=email value=$user@$domain></td><td><input name=password type=textbox><BR>(Leave blank to not change)</td>";
+	   	echo "<form method=post><tr><td valign=top>$user@$domain<input type=hidden name=email value=$user@$domain></td>"; 
+		wp_nonce_field( 'dt-cpanel-email-update', 'update_nonce' );
+		echo "<td><input name=password type=textbox><BR>(Leave blank to not change)</td>";
 		echo "<td><input type=textbox id=quota name=quota value=$quota $disabled><BR><input onchange=\"document.getElementById('quota').disabled = this.checked;\" type=checkbox $checked name=max value=1> Unlimited Storage</td><td valign=top><input type=hidden value=1 name=update><input type=submit value=Update></td></form>";
-		echo "<form method=post onsubmit=\"return confirm('Do you really want to delete $user@$domain?');\"><td valign=top><input type=hidden name=delete value=1><input type=hidden name=delemail value=$user@$domain><input type=submit value=Delete></td></form></tr>";
+		echo "<form method=post onsubmit=\"return confirm('Do you really want to delete $user@$domain?');\">";
+		wp_nonce_field( 'dt-cpanel-email-delete', 'delete_nonce' );
+		echo "<td valign=top><input type=hidden name=delete value=1><input type=hidden name=delemail value=$user@$domain><input type=submit value=Delete></td></form></tr>";
 		echo "</table><BR><a href=\"?page=dt-cpanel-email\">Back</a>";
 		exit;
 	}
 
 	// Update Operation Submitted
 	if (isset($_POST['update']) && $_POST['update'] == 1) {
+		if ( !isset($_POST['update_nonce']) || !wp_verify_nonce($_POST['update_nonce'], 'dt-cpanel-email-update')) 
+		   dt_cpanel_error_notice("Sorry, we can't seem to validate that this request was submitted correctly. Please check your settings and try again.",1);
 		if (isset($_POST['max']) && $_POST['max'] == 1)
 			$quota = 0;
 		else
@@ -283,9 +296,9 @@ function dt_cpanel_email() {
 		foreach($domain_list as $dom) {
 			echo "<option value=$dom>$dom</option>";
 		}
-	echo "</select></td></tr>
-                <tr><td>Email Password:</td><td><input name=password type=textbox></td></tr>
-                <tr><td valign=top>Email Quota (in MB):</td><td><input type=textbox id=quota name=quota value=2048><BR><input onchange=\"document.getElementById('quota').disabled = this.checked;\" type=checkbox name=max value=1> Unlimited Storage</td></tr></table><input type=hidden value=1 name=create><input type=submit value=Create>
+	echo "</select></td></tr><tr><td>Email Password:</td><td><input name=password type=textbox></td></tr>";
+	wp_nonce_field( 'dt-cpanel-email-create', 'create_nonce' );
+	echo "<tr><td valign=top>Email Quota (in MB):</td><td><input type=textbox id=quota name=quota value=2048><BR><input onchange=\"document.getElementById('quota').disabled = this.checked;\" type=checkbox name=max value=1> Unlimited Storage</td></tr></table><input type=hidden value=1 name=create><input type=submit value=Create>
 	</form>";
 }
 

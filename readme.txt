@@ -4,7 +4,7 @@ Donate link: http://www.digitimber.com/wpdonate
 Tags: cPanel, email, manage
 Requires at least: 5.0
 Tested up to: 5.3
-Stable tag: 1.3.1
+Stable tag: 1.3.2
 
 == Description ==
 
@@ -42,12 +42,13 @@ Not at this time.
 
 == Changelog ==
 
-= 1.3.1 = 12/9/2019
+= 1.3.2 = 12/9/2019
 - INFO: After submission to WP Plugin Directory, we had a few things to fix
 - UPDATED: Changed the overall name of the plugin to DigiTimber cPanel Integration
 - UPDATED: Including your own CURL code - Removed old curl library and wrote our own based on the WP HTTP api
 - UPDATED: Generic function (and/or define) names - removed old function names that were not very specific and added (hopefully) appropriate naming (dt_cpanel prefix)
 - UPDATED: Please sanitize, escape, and validate your POST calls - reviewed all input and applied applicable sanitation or encoding
+- UPDATED: Nonces and user permissions - added wp required nonce fields and validation to user input forms
 
 = 1.2.2 = 12/8/2019
 - INFO: Initial Submission to WordPress Official Plugins List
