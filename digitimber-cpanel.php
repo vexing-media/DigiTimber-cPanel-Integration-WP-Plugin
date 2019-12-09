@@ -73,13 +73,16 @@ function dt_toplevel_page() {
 function dt_cpanel_getDomainList() {
 	$options = get_option( 'cpanel_settings' );
 	$cPanel = new DTcPanelAPI(dtcrypt($options['cpun']), dtcrypt($options['cppw']), '127.0.0.1');
-	$out = $cPanel->DomainInfo->list_domains();
+	$response = $cPanel->DomainInfo->list_domains();
+	if (isset($response->errors[0]) && $response->errors[0] != ''){
+		dt_error_notice($response->errors[0],1);
+	}
 
 	// Collect domain data, primary domain is always first
-	$domain_data[0] = $out->data->main_domain;
-	$alias = $out->data->parked_domains;
-	$addon = $out->data->addon_domains;
-	$sub = $out->data->sub_domains;
+	$domain_data[0] = $response->data->main_domain;
+	$alias = $response->data->parked_domains;
+	$addon = $response->data->addon_domains;
+	$sub = $response->data->sub_domains;
 	$c=1;	
 	if (sizeof($alias) > 0) { sort($alias); foreach($alias as $domain) { $domain_data[$c] = $domain; $c++; } }
 	if (sizeof($addon) > 0) { sort($addon); foreach($addon as $domain) { $domain_data[$c] = $domain; $c++; } }
@@ -113,12 +116,14 @@ function dt_cpanel_settings_page() {
 	}
 }
 
-function dt_error_notice($err_string) {
+function dt_error_notice($err_string, $exit) {
     ?>
     <div class="error notice">
         <p><?php _e($err_string, 'dt-cpanel-settings-page' ); ?></p>
     </div>
     <?php
+	if ($exit) 
+		exit;
 }
 
 function dt_debug() {
@@ -127,7 +132,9 @@ function dt_debug() {
         echo "<h1>" . __( 'Debug Output Page', 'dt-debug' ) . "</h1>";
         echo "Debug: .<pre>";
 	$response = $cPanel->Email->list_pops_with_disk();
-
+	if (isset($response->errors[0]) && $response->errors[0] != ''){
+		dt_error_notice($response->errors[0],1);
+	}
 	print_r($response->data);
 
 	echo "<BR></GR><h2>Current Email Accounts:</h2><table width=50%>";
@@ -182,6 +189,9 @@ function dt_cpanel_email() {
 			'username'        => "$user",
 			'domain'          => "$domain"
 		]);
+		if (isset($response->errors[0]) && $response->errors[0] != ''){
+			dt_error_notice($response->errors[0],1);
+		}
 		die("<meta http-equiv='refresh' content='0'>");
         }
 
@@ -212,8 +222,10 @@ function dt_cpanel_email() {
 			'services.email.send_welcome_email' => '1',
 			'username'                          =>"$user"
 		]);
-//		die("<meta http-equiv='refresh' content='0'>");
-		exit;
+		if (isset($response->errors[0]) && $response->errors[0] != ''){
+			dt_error_notice($response->errors[0],1);
+		}
+		die("<meta http-equiv='refresh' content='0'>");
 	}
 
 	// Manage Operation Submitted
@@ -263,9 +275,8 @@ function dt_cpanel_email() {
 	        		'password'        => "$passwd",
 		        	'domain'          => "$domain"
 			]);
-			if (isset($response->errors[0]) && $response->errors[0] != '') {
-				dt_error_notice($response->errors[0]."<BR><a href=\"?page=dt-cpanel-email\">Back</a>");
-				exit;
+			if (isset($response->errors[0]) && $response->errors[0] != ''){
+				dt_error_notice($response->errors[0],1);
 			}
 		}
 		$response = $cPanel->Email->edit_pop_quota([
@@ -273,11 +284,17 @@ function dt_cpanel_email() {
 	        	'quota'           => "$quota",
 		        'domain'          => "$domain"
 		]);
+		if (isset($response->errors[0]) && $response->errors[0] != ''){
+			dt_error_notice($response->errors[0],1);
+		}
 		die("<meta http-equiv='refresh' content='0'>");
 	}
 
 	// Default Page Display
 	$response = $cPanel->Email->list_pops_with_disk();
+	if (isset($response->errors[0]) && $response->errors[0] != ''){
+		dt_error_notice($response->errors[0],1);
+	}
 	echo "<BR></GR><h2>Current Email Accounts:</h2><table width=50%>";
         echo "<tr class=border_bottom><td width=200px><B>Email Account</b><td><b>Disk Used</b></td><td><b>Disk Quota</b></td><td></td></tr>";
 	// Init Counter for loop

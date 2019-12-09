@@ -25,9 +25,8 @@ class DTcPanelAPI
     protected $pass;
     protected $type;
     protected $session;
-    protected $method;
+    protected $method = 'GET';
     protected $requestUrl;
-    protected $postData = '';
 
 
     /**
@@ -41,20 +40,10 @@ class DTcPanelAPI
         $this->pass = $pass;
         $this->server = $server;
     }
-
-    public function __get($name)
+     public function __get($string)
     {
-        switch (strtolower($name)) {
-            case 'get':
-                $this->httpMethod = 'GET';
-                break;
-            case 'post':
-                $this->httpMethod = 'POST';
-                break;
-            default:
-                $this->module = $name;
-        }
-        return $this;
+	$this->module = $string;
+	return $this;
     }
 
     /**
@@ -91,13 +80,7 @@ class DTcPanelAPI
         $this->auth = base64_encode($this->user . ":" . $this->pass);
         $this->requestUrl = 'https://' . $this->server . ':' . $this->port . '/execute/';
         $this->requestUrl .= ($this->module != '' ? $this->module . "/" : '') . $name . '?';
-        if($this->httpMethod == 'GET') {
-            $this->requestUrl .= http_build_query($arguments);
-        }
-        if($this->httpMethod == 'POST'){
-            $this->postData = $arguments;
-        }
-
+        $this->requestUrl .= http_build_query($arguments);
         return $this->wp_http_api_request($this->requestUrl);
     }
 
@@ -106,9 +89,7 @@ class DTcPanelAPI
                 'headers' => array("Authorization" => "Basic ".$this->auth),
                 'sslverify' => false
         );
-
         $response = wp_remote_retrieve_body(wp_remote_get($this->requestUrl, $args));
-        return $response;
-
+	return $response;
     }
 }
