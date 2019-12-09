@@ -1,35 +1,24 @@
 <?php
 /*
-Plugin Name: DigiTimber Integration Plugin for cPanel
+Plugin Name: DigiTimber cPanel Integration
 Plugin URI: http://www.digitimber.com/cpanel-wordpress-plugin
 Description: Access basic cPanel functions (currently limited to email) from within WordPress. This allows your customers to use the interface that they already know and love to perform basic admin tasks.
-Version: 1.2.2a
+Version: 1.3.0
 Author: DigiTimber
 Author URI: http://www.digitimber.com/
-License:     GPL2
- 
-DigiTimber Integration Plugin for cPanel is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 2 of the License, or
-any later version.
- 
-DigiTimber Integration Plugin for cPanel is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-GNU General Public License for more details.
- 
-You should have received a copy of the GNU General Public License
-along with DigiTimber Integration Plugin for cPanel. If not, see https://www.gnu.org/licenses/gpl-3.0.html.
+License: GPL2
+DigiTimber cPanel Integration is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 2 of the License, or any later version.
+DigiTimber cPanel Integration is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+You should have received a copy of the GNU General Public License along with DigiTimber cPanel Integration. If not, see https://www.gnu.org/licenses/gpl-3.0.html.
 */
-
 
 require_once("dtcpaneluapi.class.php");
 
-register_uninstall_hook(__FILE__, 'uninstallPlugin');
+register_uninstall_hook(__FILE__, 'dt_cpanel_uninstallPlugin');
 add_action( 'admin_menu', 'digitimber_cpanel_menu' );  
 function digitimber_cpanel_menu() {
     // Add Toplevel
-    add_menu_page(__('DigiTimber cPanel','digitimber-cpanel'), __('DigiTimber cPanel','digitimber-cpanel'), 'administrator', 'dt-top-level-handle', 'dt_toplevel_page', 'dashicons-admin-tools' );
+    add_menu_page(__('DigiTimber cPanel','digitimber-cpanel'), __('DigiTimber cPanel','digitimber-cpanel'), 'administrator', 'dt-top-level-handle', 'dt_cpanel_main_page', 'dashicons-admin-tools' );
 
     // Add a submenu for Email
     add_submenu_page('dt-top-level-handle', __('Email','digitimber-cpanel-email'), __('Email','digitimber-cpanel-email'), 'administrator', 'dt-cpanel-email', 'dt_cpanel_email');
@@ -42,16 +31,14 @@ function digitimber_cpanel_menu() {
     add_options_page(__('cPanel Settings','digitimber-cpanel'), __('cPanel Settings','digitimber-cpanel'), 'administrator', 'dt-cpanel-settings-page', 'dt_cpanel_settings_page');
 
 } 
-add_action( 'admin_init', 'register_cpanel_settings' );
-if( !function_exists("register_cpanel_settings") ) { 
-    function register_cpanel_settings() {   
+add_action( 'admin_init', 'dt_cpanel_register_settings' );
+function dt_cpanel_register_settings() {   
         register_setting( 'cpanel_key', 'cpanel_key' ); 
         register_setting( 'cpanel_settings', 'cpanel_settings' ); 
-    } 
 }
 
-add_action( 'admin_init', 'createRandomKeys' );
-function createRandomKeys() {
+add_action( 'admin_init', 'dt_cpanel_createRandomKeys' );
+function dt_cpanel_createRandomKeys() {
 	settings_fields( 'cpanel_key' );
 	do_settings_sections( __FILE__ );
 	$k1 = base64_encode(openssl_random_pseudo_bytes(32));
@@ -59,7 +46,7 @@ function createRandomKeys() {
 	add_option( 'cpanel_key', array("key1"=>$k1,"key2"=>$k2), '', 'yes' );
 }
 
-function dt_toplevel_page() {
+function dt_cpanel_main_page() {
 	settings_fields( 'cpanel_settings' );
 	echo "<h2>" . __( 'DigiTimber Integration Plugin for cPanel', 'digitimber-cpanel' ) . "</h2><BR>";
 	echo "Plugin Name: DigiTimber Integration Plugin for cPanel<BR>
@@ -72,10 +59,10 @@ function dt_toplevel_page() {
 }
 function dt_cpanel_getDomainList() {
 	$options = get_option( 'cpanel_settings' );
-	$cPanel = new DTcPanelAPI(dtcrypt($options['cpun']), dtcrypt($options['cppw']), '127.0.0.1');
+	$cPanel = new DTcPanelAPI(dt_cpanel_crypt($options['cpun']), dt_cpanel_crypt($options['cppw']), '127.0.0.1');
 	$response = $cPanel->DomainInfo->list_domains();
 	if (isset($response->errors[0]) && $response->errors[0] != ''){
-		dt_error_notice($response->errors[0],1);
+		dt_cpanel_error_notice($response->errors[0],1);
 	}
 
 	// Collect domain data, primary domain is always first
@@ -99,13 +86,13 @@ function dt_cpanel_settings_page() {
 
 	if (isset($_POST['settings_update']) && $_POST['settings_update'] == 1) {
 		echo "<B>Updating settings, please wait...</b><BR>";
-		update_option( 'cpanel_settings', array("cpun"=>dtcrypt($_POST['cpun'],1),'cppw'=>dtcrypt($_POST['cppw'],1)), '', 'yes' );
+		update_option( 'cpanel_settings', array("cpun"=>dt_cpanel_crypt($_POST['cpun'],1),'cppw'=>dt_cpanel_crypt($_POST['cppw'],1)), '', 'yes' );
         	echo("<meta http-equiv='refresh' content='0'>");
 	} else {
 		$cpun_value = '';
 		$cppw_value = '';
-		if (isset($options['cpun']) && $options['cpun'] != '') $cpun_value = dtcrypt($options['cpun']);
-		if (isset($options['cppw']) && $options['cppw'] != '') $cppw_value = dtcrypt($options['cppw']);
+		if (isset($options['cpun']) && $options['cpun'] != '') $cpun_value = dt_cpanel_crypt($options['cpun']);
+		if (isset($options['cppw']) && $options['cppw'] != '') $cppw_value = dt_cpanel_crypt($options['cppw']);
 		
 		echo "<form method=post>"; ?>
 			<th scope="row">cPanel Username:</th><td><input type="text" name="cpun" value="<? echo $cpun_value; ?>"></td><BR>
@@ -116,7 +103,7 @@ function dt_cpanel_settings_page() {
 	}
 }
 
-function dt_error_notice($err_string, $exit) {
+function dt_cpanel_error_notice($err_string, $exit) {
     ?>
     <div class="error notice">
         <p><?php _e($err_string, 'dt-cpanel-settings-page' ); ?></p>
@@ -126,50 +113,10 @@ function dt_error_notice($err_string, $exit) {
 		exit;
 }
 
-function dt_debug() {
-	$options = get_option( 'cpanel_settings' );
-	$cPanel = new DTcPanelAPI(dtcrypt($options['cpun']), dtcrypt($options['cppw']), '127.0.0.1');
-        echo "<h1>" . __( 'Debug Output Page', 'dt-debug' ) . "</h1>";
-        echo "Debug: .<pre>";
-	$response = $cPanel->Email->list_pops_with_disk();
-	if (isset($response->errors[0]) && $response->errors[0] != ''){
-		dt_error_notice($response->errors[0],1);
-	}
-	print_r($response->data);
-
-	echo "<BR></GR><h2>Current Email Accounts:</h2><table width=50%>";
-        echo "<tr class=border_bottom><td width=200px><B>Email Account</b><td><b>Disk Used</b></td><td><b>Disk Quota</b></td><td></td></tr>";
-	// Init Counter for loop
-	$c=0;
-	if (sizeof($response->data) > 0) {
-		foreach ($response->data as $data) {
-			if (filter_var($data->login, FILTER_VALIDATE_EMAIL)) {
-        	        	$odata[$c][0] = $data->login;
-				$odata[$c][1] = $data->humandiskused;
-				$odata[$c][2] = $data->humandiskquota;
-				$c++;
-			}
-		}
-		// Alphabetize our list of email addresses for ease of finding them
-		// ToDo: Add pages for lists and a default setting for number of elements listed
-		sort($odata);
-		for ($i=0;$i<sizeof($odata);$i++) {
-			echo "<tr class=border_bottom_lt><td>".$odata[$i][0]."</td><td>".$odata[$i][1]."</td><td>".$odata[$i][2]."</td>";
-			echo "<form method=post><td><input type=hidden name=manage value=1><input type=hidden name=email value=".$odata[$i][0]."><input type=hidden name=quota value=".$odata[$i][2]."><input type=submit value=Manage></td></form></tr>";
-		}
-		echo "</table>";
-	} else 
-		echo "No Email Accounts to Display<BR>";
-
-	
-
-}
-
-
 // Email Page
 function dt_cpanel_email() {
 	$options = get_option( 'cpanel_settings' );
-	$cPanel = new DTcPanelAPI(dtcrypt($options['cpun']), dtcrypt($options['cppw']), '127.0.0.1');
+	$cPanel = new DTcPanelAPI(dt_cpanel_crypt($options['cpun']), dt_cpanel_crypt($options['cppw']), '127.0.0.1');
 	// New style elements, need to move to css at some point
 	?><style>
 		tr.border_bottom td {  border-bottom:1pt solid black; }
@@ -190,7 +137,7 @@ function dt_cpanel_email() {
 			'domain'          => "$domain"
 		]);
 		if (isset($response->errors[0]) && $response->errors[0] != ''){
-			dt_error_notice($response->errors[0],1);
+			dt_cpanel_error_notice($response->errors[0],1);
 		}
 		die("<meta http-equiv='refresh' content='0'>");
         }
@@ -200,7 +147,7 @@ function dt_cpanel_email() {
 		if (isset($_POST['password']) && $_POST['password'] != '')
 			$pass = $_POST['password'];
 		else {
-			dt_error_notice("Password cannot be blank when creating an account. Please try again.<BR><a href=\"?page=dt-cpanel-email\">Back</a>");
+			dt_cpanel_error_notice("Password cannot be blank when creating an account. Please try again.<BR><a href=\"?page=dt-cpanel-email\">Back</a>");
 			exit;
 		}
 		
@@ -223,7 +170,7 @@ function dt_cpanel_email() {
 			'username'                          =>"$user"
 		]);
 		if (isset($response->errors[0]) && $response->errors[0] != ''){
-			dt_error_notice($response->errors[0],1);
+			dt_cpanel_error_notice($response->errors[0],1);
 		}
 		die("<meta http-equiv='refresh' content='0'>");
 	}
@@ -243,7 +190,7 @@ function dt_cpanel_email() {
 					case 'MB': $quota = round($quota_num,0); break;
 					case 'GB': $quota = round($quota_num * 1024, 0); break;
 					case 'TB': $quota = round($quota_num * 1024 * 1024, 0); break;
-					default: dt_error_notice("Unable to convert quota to MB ($quota_num $postfix). Please submit this error with a bug report."); break;
+					default: dt_cpanel_error_notice("Unable to convert quota to MB ($quota_num $postfix). Please submit this error with a bug report."); break;
 				}
 			}
 		}
@@ -276,7 +223,7 @@ function dt_cpanel_email() {
 		        	'domain'          => "$domain"
 			]);
 			if (isset($response->errors[0]) && $response->errors[0] != ''){
-				dt_error_notice($response->errors[0],1);
+				dt_cpanel_error_notice($response->errors[0],1);
 			}
 		}
 		$response = $cPanel->Email->edit_pop_quota([
@@ -285,7 +232,7 @@ function dt_cpanel_email() {
 		        'domain'          => "$domain"
 		]);
 		if (isset($response->errors[0]) && $response->errors[0] != ''){
-			dt_error_notice($response->errors[0],1);
+			dt_cpanel_error_notice($response->errors[0],1);
 		}
 		die("<meta http-equiv='refresh' content='0'>");
 	}
@@ -293,7 +240,7 @@ function dt_cpanel_email() {
 	// Default Page Display
 	$response = $cPanel->Email->list_pops_with_disk();
 	if (isset($response->errors[0]) && $response->errors[0] != ''){
-		dt_error_notice($response->errors[0],1);
+		dt_cpanel_error_notice($response->errors[0],1);
 	}
 	echo "<BR></GR><h2>Current Email Accounts:</h2><table width=50%>";
         echo "<tr class=border_bottom><td width=200px><B>Email Account</b><td><b>Disk Used</b></td><td><b>Disk Quota</b></td><td></td></tr>";
@@ -336,7 +283,7 @@ function dt_cpanel_email() {
 
 
 // Encrypt and Decryption function for cpanel credentials using OpenSSL
-function dtcrypt($string,$action = false) {
+function dt_cpanel_crypt($string,$action = false) {
         settings_fields( 'cpanel_key' );
         do_settings_sections( __FILE__ );
 	$key = get_option( 'cpanel_key' );
@@ -354,7 +301,7 @@ function dtcrypt($string,$action = false) {
 	return $output;
 }
 
-function uninstallPlugin() {
+function dt_cpanel_uninstallPlugin() {
 	if (!defined('WP_UNINSTALL_PLUGIN')) {
 		die;
 	}

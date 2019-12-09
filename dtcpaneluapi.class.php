@@ -10,7 +10,7 @@
  */
 
 /**
- * Class DTWP_HTTP_cPanelAPI
+ * Class DTcPanelAPI
  */
 class DTcPanelAPI
 {
@@ -18,7 +18,6 @@ class DTcPanelAPI
     public $port = 2083; //default for cpanel SSL (2087 for WHM SSL)
     public $server = "127.0.0.1"; //default to localhost
     public $user;
-    public $json = '';
 
     protected $module; //String - Module we want to use
     protected $auth;

@@ -4,7 +4,7 @@ Donate link: http://www.digitimber.com/wpdonate
 Tags: cPanel, email, manage
 Requires at least: 5.0
 Tested up to: 5.3
-Stable tag: 1.2.2
+Stable tag: 1.3.0
 
 == Description ==
 
@@ -41,6 +41,12 @@ Currently there is no documentation besides this readme. More will become availa
 Not at this time. 
 
 == Changelog ==
+
+= 1.3.0 = 12/9/2019
+- INFO: After submission to WP Plugin Directory, we had a few things to fix
+- UPDATED: Including your own CURL code - Removed old curl library and wrote our own based on the WP HTTP api
+- UPDATED: Generic function (and/or define) names - removed old function names that were not very specific and added (hopefully) appropriate naming
+- TODO: Please sanitize, escape, and validate your POST calls
 
 = 1.2.2 = 12/8/2019
 - INFO: Initial Submission to WordPress Official Plugins List
