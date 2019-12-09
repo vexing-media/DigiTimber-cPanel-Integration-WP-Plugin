@@ -32,14 +32,14 @@ function digitimber_cpanel_menu() {
     add_menu_page(__('DigiTimber cPanel','digitimber-cpanel'), __('DigiTimber cPanel','digitimber-cpanel'), 'administrator', 'dt-top-level-handle', 'dt_toplevel_page', 'dashicons-admin-tools' );
 
     // Add a submenu for Email
-    add_submenu_page('dt-top-level-handle', __('Email','digitimber-cpanel-email'), __('Email','digitimber-cpanel-email'), 'administrator', 'dt-email', 'dt_email');
+    add_submenu_page('dt-top-level-handle', __('Email','digitimber-cpanel-email'), __('Email','digitimber-cpanel-email'), 'administrator', 'dt-cpanel-email', 'dt_cpanel_email');
 
     // Add a submenu for Debug
     add_submenu_page('dt-top-level-handle', __('Debug','digitimber-cpanel-debug'), __('Debug','digitimber-cpanel-debug'), 'administrator', 'dt-debug', 'dt_debug');
 
     // Add a submenu for Settings (Also create a Settings -> cPanel Settings section)
-    add_submenu_page('dt-top-level-handle', __('Settings','dt-cpanel-settings'), __('Settings','dt-cpanel-settings'), 'administrator', 'dt-cpanel-settings', 'dt_settings_page');
-    add_options_page(__('cPanel Settings','digitimber-cpanel'), __('cPanel Settings','digitimber-cpanel'), 'administrator', 'dt-cpanel-settings', 'dt_settings_page');
+    add_submenu_page('dt-top-level-handle', __('Settings','dt-cpanel-settings-page'), __('Settings','dt-cpanel-settings-page'), 'administrator', 'dt-cpanel-settings-page', 'dt_cpanel_settings_page');
+    add_options_page(__('cPanel Settings','digitimber-cpanel'), __('cPanel Settings','digitimber-cpanel'), 'administrator', 'dt-cpanel-settings-page', 'dt_cpanel_settings_page');
 
 } 
 add_action( 'admin_init', 'register_cpanel_settings' );
@@ -68,10 +68,12 @@ function dt_toplevel_page() {
 	Author: DigiTimber<BR>
 	Author URI: <a href=\"http://www.digitimber.com/\">http://www.digitimber.com/</a><BR>";
 
-	echo "<BR><BR><a href=\"?page=dt-email\">Email</a><BR><a href=\"?page=dt-cpanel-settings\">Settings</a>";
+	echo "<BR><BR><a href=\"?page=dt-cpanel-email\">Email</a><BR><a href=\"?page=dt-cpanel-settings-page\">Settings</a>";
 }
-function getDomainList() {
-	$out = $cPanel->uapi->DomainInfo->list_domains();
+function dt_cpanel_getDomainList() {
+	$options = get_option( 'cpanel_settings' );
+	$cPanel = new DTcPanelAPI(dtcrypt($options['cpun']), dtcrypt($options['cppw']), '127.0.0.1');
+	$out = $cPanel->DomainInfo->list_domains();
 
 	// Collect domain data, primary domain is always first
 	$domain_data[0] = $out->data->main_domain;
@@ -86,11 +88,11 @@ function getDomainList() {
 	return $domain_data;
 }
 
-function dt_settings_page() {
+function dt_cpanel_settings_page() {
 	settings_fields( 'cpanel_settings' );
 	do_settings_sections( __FILE__ );
 	$options = get_option( 'cpanel_settings' );
-	echo "<h2>" . __( 'Settings Page', 'dt-cpanel-settings' ) . "</h2><BR>";
+	echo "<h2>" . __( 'Settings Page', 'dt-cpanel-settings-page' ) . "</h2><BR>";
 
 	if (isset($_POST['settings_update']) && $_POST['settings_update'] == 1) {
 		echo "<B>Updating settings, please wait...</b><BR>";
@@ -114,24 +116,53 @@ function dt_settings_page() {
 function dt_error_notice($err_string) {
     ?>
     <div class="error notice">
-        <p><?php _e($err_string, 'dt-cpanel-settings' ); ?></p>
+        <p><?php _e($err_string, 'dt-cpanel-settings-page' ); ?></p>
     </div>
     <?php
 }
 
 function dt_debug() {
- // Header
+	$options = get_option( 'cpanel_settings' );
+	$cPanel = new DTcPanelAPI(dtcrypt($options['cpun']), dtcrypt($options['cppw']), '127.0.0.1');
         echo "<h1>" . __( 'Debug Output Page', 'dt-debug' ) . "</h1>";
-        echo "Debug:<pre>";
+        echo "Debug: .<pre>";
+	$response = $cPanel->Email->list_pops_with_disk();
 
-        $output = dt_exec_cpanel_uapi("Email", "list_pops");
-        print_r($output->data);
+	print_r($response->data);
+
+	echo "<BR></GR><h2>Current Email Accounts:</h2><table width=50%>";
+        echo "<tr class=border_bottom><td width=200px><B>Email Account</b><td><b>Disk Used</b></td><td><b>Disk Quota</b></td><td></td></tr>";
+	// Init Counter for loop
+	$c=0;
+	if (sizeof($response->data) > 0) {
+		foreach ($response->data as $data) {
+			if (filter_var($data->login, FILTER_VALIDATE_EMAIL)) {
+        	        	$odata[$c][0] = $data->login;
+				$odata[$c][1] = $data->humandiskused;
+				$odata[$c][2] = $data->humandiskquota;
+				$c++;
+			}
+		}
+		// Alphabetize our list of email addresses for ease of finding them
+		// ToDo: Add pages for lists and a default setting for number of elements listed
+		sort($odata);
+		for ($i=0;$i<sizeof($odata);$i++) {
+			echo "<tr class=border_bottom_lt><td>".$odata[$i][0]."</td><td>".$odata[$i][1]."</td><td>".$odata[$i][2]."</td>";
+			echo "<form method=post><td><input type=hidden name=manage value=1><input type=hidden name=email value=".$odata[$i][0]."><input type=hidden name=quota value=".$odata[$i][2]."><input type=submit value=Manage></td></form></tr>";
+		}
+		echo "</table>";
+	} else 
+		echo "No Email Accounts to Display<BR>";
+
+	
 
 }
 
 
 // Email Page
-function dt_email() {
+function dt_cpanel_email() {
+	$options = get_option( 'cpanel_settings' );
+	$cPanel = new DTcPanelAPI(dtcrypt($options['cpun']), dtcrypt($options['cppw']), '127.0.0.1');
 	// New style elements, need to move to css at some point
 	?><style>
 		tr.border_bottom td {  border-bottom:1pt solid black; }
@@ -139,15 +170,15 @@ function dt_email() {
 	</style><?	
 	// Header
 	if (isset($_POST['email']) && $_POST['email'] != '') 
-		echo "<h1>" . __( 'Email Administration ('.$_POST['email'].')', 'dt-email' ) . "</h1>";
+		echo "<h1>" . __( 'Email Administration ('.$_POST['email'].')', 'dt-cpanel-email' ) . "</h1>";
 	else
-		echo "<h1>" . __( 'Email Administration', 'dt-email' ) . "</h1>";
+		echo "<h1>" . __( 'Email Administration', 'dt-cpanel-email' ) . "</h1>";
     
 	// Delete Operation Submitted
 	if (isset($_POST['delete']) && $_POST['delete'] == 1) {
 		list($user, $domain) = explode('@', $_POST['delemail']);
         	echo "<BR><B>Attempting to delete $user@$domain, please wait...</b><BR>";
-		$response = $cPanel->uapi->UserManager->delete_user([
+		$response = $cPanel->UserManager->delete_user([
 			'username'        => "$user",
 			'domain'          => "$domain"
 		]);
@@ -159,7 +190,7 @@ function dt_email() {
 		if (isset($_POST['password']) && $_POST['password'] != '')
 			$pass = $_POST['password'];
 		else {
-			dt_error_notice("Password cannot be blank when creating an account. Please try again.<BR><a href=\"?page=dt-email\">Back</a>");
+			dt_error_notice("Password cannot be blank when creating an account. Please try again.<BR><a href=\"?page=dt-cpanel-email\">Back</a>");
 			exit;
 		}
 		
@@ -173,7 +204,7 @@ function dt_email() {
 			$quota = 2048;
 
 		echo "<B>Attempting to create $user@$domain, please wait...</a><BR>";
-		$response = $cPanel->uapi->UserManager->create_user([
+		$response = $cPanel->UserManager->create_user([
 			'domain'                            => "$domain",
 			'password'                          => "$pass",
 			'services.email.enabled'            => '1',
@@ -181,7 +212,8 @@ function dt_email() {
 			'services.email.send_welcome_email' => '1',
 			'username'                          =>"$user"
 		]);
-		die("<meta http-equiv='refresh' content='0'>");
+//		die("<meta http-equiv='refresh' content='0'>");
+		exit;
 	}
 
 	// Manage Operation Submitted
@@ -210,7 +242,7 @@ function dt_email() {
 	   	echo "<form method=post><tr><td valign=top>$user@$domain<input type=hidden name=email value=$user@$domain></td><td><input name=password type=textbox><BR>(Leave blank to not change)</td>";
 		echo "<td><input type=textbox id=quota name=quota value=$quota $disabled><BR><input onchange=\"document.getElementById('quota').disabled = this.checked;\" type=checkbox $checked name=max value=1> Unlimited Storage</td><td valign=top><input type=hidden value=1 name=update><input type=submit value=Update></td></form>";
 		echo "<form method=post onsubmit=\"return confirm('Do you really want to delete $user@$domain?');\"><td valign=top><input type=hidden name=delete value=1><input type=hidden name=delemail value=$user@$domain><input type=submit value=Delete></td></form></tr>";
-		echo "</table><BR><a href=\"?page=dt-email\">Back</a>";
+		echo "</table><BR><a href=\"?page=dt-cpanel-email\">Back</a>";
 		exit;
 	}
 
@@ -226,17 +258,17 @@ function dt_email() {
 		echo "<B>Attempting to update $user@$domain, please wait...</a><BR>";
 		if (isset($_POST['password']) && $_POST['password'] != '') {
 			$passwd = $_POST['password'];
-			$response = $cPanel->uapi->Email->passwd_pop([
+			$response = $cPanel->Email->passwd_pop([
 			        'email'           => "$user",
 	        		'password'        => "$passwd",
 		        	'domain'          => "$domain"
 			]);
 			if (isset($response->errors[0]) && $response->errors[0] != '') {
-				dt_error_notice($response->errors[0]."<BR><a href=\"?page=dt-email\">Back</a>");
+				dt_error_notice($response->errors[0]."<BR><a href=\"?page=dt-cpanel-email\">Back</a>");
 				exit;
 			}
 		}
-		$response = $cPanel->uapi->Email->edit_pop_quota([
+		$response = $cPanel->Email->edit_pop_quota([
 		        'email'           => "$user",
 	        	'quota'           => "$quota",
 		        'domain'          => "$domain"
@@ -245,7 +277,7 @@ function dt_email() {
 	}
 
 	// Default Page Display
-	$response = $cPanel->uapi->Email->list_pops_with_disk();
+	$response = $cPanel->Email->list_pops_with_disk();
 	echo "<BR></GR><h2>Current Email Accounts:</h2><table width=50%>";
         echo "<tr class=border_bottom><td width=200px><B>Email Account</b><td><b>Disk Used</b></td><td><b>Disk Quota</b></td><td></td></tr>";
 	// Init Counter for loop
@@ -272,7 +304,7 @@ function dt_email() {
 
 
 	// Create new Email Form
-	$domain_list = getDomainList();
+	$domain_list = dt_cpanel_getDomainList();
    	echo "<form method=post><BR><BR><b>Create New Email Address: </b><table>";
 	echo "<tr><td>Email Address:</td><td><input autocomplete=lolwhut type=textbox name=user>@<select name=domain>";
 		foreach($domain_list as $dom) {

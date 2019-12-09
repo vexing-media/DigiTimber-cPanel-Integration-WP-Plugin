@@ -52,7 +52,7 @@ class DTcPanelAPI
                 $this->httpMethod = 'POST';
                 break;
             default:
-                $this->scope = $name;
+                $this->module = $name;
         }
         return $this;
     }
@@ -89,7 +89,7 @@ class DTcPanelAPI
     protected function APIcall($name, $arguments)
     {
         $this->auth = base64_encode($this->user . ":" . $this->pass);
-        $this->requestUrl = "https://" . $this->server . ':' . $this->port . $this->method;
+        $this->requestUrl = 'https://' . $this->server . ':' . $this->port . '/execute/';
         $this->requestUrl .= ($this->module != '' ? $this->module . "/" : '') . $name . '?';
         if($this->httpMethod == 'GET') {
             $this->requestUrl .= http_build_query($arguments);
