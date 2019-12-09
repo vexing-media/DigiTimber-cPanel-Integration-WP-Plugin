@@ -34,6 +34,9 @@ function digitimber_cpanel_menu() {
     // Add a submenu for Email
     add_submenu_page('dt-top-level-handle', __('Email','digitimber-cpanel-email'), __('Email','digitimber-cpanel-email'), 'administrator', 'dt-email', 'dt_email');
 
+    // Add a submenu for Debug
+    add_submenu_page('dt-top-level-handle', __('Debug','digitimber-cpanel-debug'), __('Debug','digitimber-cpanel-debug'), 'administrator', 'dt-debug', 'dt_debug');
+
     // Add a submenu for Settings (Also create a Settings -> cPanel Settings section)
     add_submenu_page('dt-top-level-handle', __('Settings','dt-cpanel-settings'), __('Settings','dt-cpanel-settings'), 'administrator', 'dt-cpanel-settings', 'dt_settings_page');
     add_options_page(__('cPanel Settings','digitimber-cpanel'), __('cPanel Settings','digitimber-cpanel'), 'administrator', 'dt-cpanel-settings', 'dt_settings_page');
@@ -57,7 +60,6 @@ function createRandomKeys() {
 }
 
 function dt_toplevel_page() {
-	$debug = 0;
 	settings_fields( 'cpanel_settings' );
 	echo "<h2>" . __( 'DigiTimber Integration Plugin for cPanel', 'digitimber-cpanel' ) . "</h2><BR>";
 	echo "Plugin Name: DigiTimber Integration Plugin for cPanel<BR>
@@ -65,16 +67,10 @@ function dt_toplevel_page() {
 	Description: DigiTimber Integration Plugin for cPanel.<BR>
 	Author: DigiTimber<BR>
 	Author URI: <a href=\"http://www.digitimber.com/\">http://www.digitimber.com/</a><BR>";
-	if ($debug) {
-		echo "Debug: <BR><pre>";
-		$data = getDomainList();
-		print_r($data);
-	}
 
 	echo "<BR><BR><a href=\"?page=dt-email\">Email</a><BR><a href=\"?page=dt-cpanel-settings\">Settings</a>";
 }
 function getDomainList() {
-	$cPanel = connectToCpanel();
 	$out = $cPanel->uapi->DomainInfo->list_domains();
 
 	// Collect domain data, primary domain is always first
@@ -123,22 +119,16 @@ function dt_error_notice($err_string) {
     <?php
 }
 
+function dt_debug() {
+ // Header
+        echo "<h1>" . __( 'Debug Output Page', 'dt-debug' ) . "</h1>";
+        echo "Debug:<pre>";
 
-function connectToCpanel() {
-	$options = get_option( 'cpanel_settings' );
-	if(!isset($options['cpun']) || !isset($options['cppw'])) {
-		dt_error_notice("cPanel credentials appear to be missing, please check your <a href=\"?page=dt-cpanel-settings\">settings</a>.");
-		exit;
-	}
-	$cPanel = new DTcPanelAPI(dtcrypt($options['cpun']), dtcrypt($options['cppw']), '127.0.0.1');
-	$checkvalid = $cPanel->uapi->LastLogin->get_last_or_current_logged_in_ip(); 
-	if (isset($checkvalid) && $checkvalid != '') {
-		return $cPanel;
-	} else {
-		dt_error_notice("cPanel credentials appear to be invalid, please check your <a href=\"?page=dt-cpanel-settings\">settings</a>.");
-		exit;
-	}
+        $output = dt_exec_cpanel_uapi("Email", "list_pops");
+        print_r($output->data);
+
 }
+
 
 // Email Page
 function dt_email() {
@@ -152,8 +142,6 @@ function dt_email() {
 		echo "<h1>" . __( 'Email Administration ('.$_POST['email'].')', 'dt-email' ) . "</h1>";
 	else
 		echo "<h1>" . __( 'Email Administration', 'dt-email' ) . "</h1>";
-	// Attempt connection to cPanel using existing credentials
-	$cPanel = connectToCpanel();
     
 	// Delete Operation Submitted
 	if (isset($_POST['delete']) && $_POST['delete'] == 1) {
