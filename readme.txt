@@ -1,14 +1,14 @@
-=== DigiTimber Integration Plugin for cPanel ===
+=== DigiTimber cPanel Integration ===
 Contributors: digitimber
 Donate link: http://www.digitimber.com/wpdonate
 Tags: cPanel, email, manage
 Requires at least: 5.0
 Tested up to: 5.3
-Stable tag: 1.3.0
+Stable tag: 1.3.1
 
 == Description ==
 
-DigiTimber Integration Plugin for cPanel allows users to access basic cPanel functionality from within WordPress. This plugin was created initially for our own user, but decided that with the lack of any other plugins in the list, we'd toss it out there for others. Hopefully its helpful to you and your users!
+DigiTimber cPanel Integration allows users to access basic cPanel functionality from within WordPress. This plugin was created initially for our own user, but decided that with the lack of any other plugins in the list, we'd toss it out there for others. Hopefully its helpful to you and your users!
 
 Currently limited to email administration, but more is planned.
 
@@ -42,11 +42,12 @@ Not at this time.
 
 == Changelog ==
 
-= 1.3.0 = 12/9/2019
+= 1.3.1 = 12/9/2019
 - INFO: After submission to WP Plugin Directory, we had a few things to fix
+- UPDATED: Changed the overall name of the plugin to DigiTimber cPanel Integration
 - UPDATED: Including your own CURL code - Removed old curl library and wrote our own based on the WP HTTP api
-- UPDATED: Generic function (and/or define) names - removed old function names that were not very specific and added (hopefully) appropriate naming
-- TODO: Please sanitize, escape, and validate your POST calls
+- UPDATED: Generic function (and/or define) names - removed old function names that were not very specific and added (hopefully) appropriate naming (dt_cpanel prefix)
+- UPDATED: Please sanitize, escape, and validate your POST calls - reviewed all input and applied applicable sanitation or encoding
 
 = 1.2.2 = 12/8/2019
 - INFO: Initial Submission to WordPress Official Plugins List

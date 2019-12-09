@@ -3,7 +3,7 @@
 Plugin Name: DigiTimber cPanel Integration
 Plugin URI: https://github.com/vexing-media/DigiTimber-cPanel-Integration-WP-Plugin
 Description: Access basic cPanel functions (currently limited to email) from within WordPress. This allows your customers to use the interface that they already know and love to perform basic admin tasks.
-Version: 1.3.0
+Version: 1.3.1
 Author: DigiTimber
 Author URI: http://www.digitimber.com/
 License: GPL2
@@ -15,6 +15,7 @@ You should have received a copy of the GNU General Public License along with Dig
 require_once("dtcpaneluapi.class.php");
 
 register_uninstall_hook(__FILE__, 'dt_cpanel_uninstallPlugin');
+
 add_action( 'admin_menu', 'digitimber_cpanel_menu' );  
 function digitimber_cpanel_menu() {
     // Add Toplevel
@@ -23,22 +24,22 @@ function digitimber_cpanel_menu() {
     // Add a submenu for Email
     add_submenu_page('dt-top-level-handle', __('Email','digitimber-cpanel-email'), __('Email','digitimber-cpanel-email'), 'administrator', 'dt-cpanel-email', 'dt_cpanel_email');
 
-    // Add a submenu for Debug
-    add_submenu_page('dt-top-level-handle', __('Debug','digitimber-cpanel-debug'), __('Debug','digitimber-cpanel-debug'), 'administrator', 'dt-debug', 'dt_debug');
-
     // Add a submenu for Settings (Also create a Settings -> cPanel Settings section)
     add_submenu_page('dt-top-level-handle', __('Settings','dt-cpanel-settings-page'), __('Settings','dt-cpanel-settings-page'), 'administrator', 'dt-cpanel-settings-page', 'dt_cpanel_settings_page');
     add_options_page(__('cPanel Settings','digitimber-cpanel'), __('cPanel Settings','digitimber-cpanel'), 'administrator', 'dt-cpanel-settings-page', 'dt_cpanel_settings_page');
 
 } 
+
 add_action( 'admin_init', 'dt_cpanel_register_settings' );
 function dt_cpanel_register_settings() {   
+	// Register the options we are going to use
         register_setting( 'cpanel_key', 'cpanel_key' ); 
         register_setting( 'cpanel_settings', 'cpanel_settings' ); 
 }
 
 add_action( 'admin_init', 'dt_cpanel_createRandomKeys' );
 function dt_cpanel_createRandomKeys() {
+	// On first install, generate keys for use in encrypting the cPanel credentials and store them in the database
 	settings_fields( 'cpanel_key' );
 	do_settings_sections( __FILE__ );
 	$k1 = base64_encode(openssl_random_pseudo_bytes(32));
@@ -46,26 +47,41 @@ function dt_cpanel_createRandomKeys() {
 	add_option( 'cpanel_key', array("key1"=>$k1,"key2"=>$k2), '', 'yes' );
 }
 
+// Main page of the plugin - just data for now
 function dt_cpanel_main_page() {
-	settings_fields( 'cpanel_settings' );
-	echo "<h2>" . __( 'DigiTimber Integration Plugin for cPanel', 'digitimber-cpanel' ) . "</h2><BR>";
-	echo "Plugin Name: DigiTimber Integration Plugin for cPanel<BR>
-	Plugin URI: <a href=\"http://www.digitimber.com/cpanel-wordpress-plugin\">http://www.digitimber.com/cpanel-wordpress-plugin</a><BR>
-	Description: DigiTimber Integration Plugin for cPanel.<BR>
-	Author: DigiTimber<BR>
-	Author URI: <a href=\"http://www.digitimber.com/\">http://www.digitimber.com/</a><BR>";
-
-	echo "<BR><BR><a href=\"?page=dt-cpanel-email\">Email</a><BR><a href=\"?page=dt-cpanel-settings-page\">Settings</a>";
+	echo "<h2>" . __( 'DigiTimber cPanel Integration', 'digitimber-cpanel' ) . "</h2><BR>";
+	echo "Plugin Name: DigiTimber cPanel Integration Plugin<BR>"; ?>
+	Plugin URI: <a href="https://github.com/vexing-media/DigiTimber-cPanel-Integration-WP-Plugin">https://github.com/vexing-media/DigiTimber-cPanel-Integration-WP-Plugin</a>
+	<p><h2>== Description ==</h2></p>
+	<p>DigiTimber cPanel Integration allows users to access basic cPanel functionality from within WordPress. This plugin was created initially for our own user, but decided that with the lack of any other plugins in the list, we'd toss it out there for others. Hopefully its helpful to you and your users!</p>
+	<p>Currently limited to email administration, but more is planned.</p>
+	<p><H2>== Frequently Asked Questions ==</p>
+	<p><H3>= Is it secure to have my cPanel login credentials in my WordPress? =</p>
+	<p>It's as secure as your wordpress site. We store the credentials using AES-256 encryption in the WordPress database. The salt and iv are computed once on installation so each installation is unique.</p>
+	<p><H3>= Is there an undo option? =</p>
+	<p>No. Unfortunately all changes made are immediately caried out on the server. Data loss may occur if you use the delete or modify options. Please ensure you have a valid backup of your data on cPanel while using any remote plugin.</p>
+	<p><H3>= Where is all the documentation? =</p>
+	<p>Currently there is no documentation besides this readme. More will become available as we add additional functionality.</p>
+	<p><H3>= Do you make any other plugins? =</p>
+	<p>Not at this time.</p>
+	<p><H2>== Changelog ==</h2></p>
+	<p><B>= 1.3.1 = 12/9/2019</b><br />- INFO: After submission to WP Plugin Directory, we had a few things to fix<br />- UPDATED: Changed the overall name of the plugin to DigiTimber cPanel Integration<br />- UPDATED: Including your own CURL code - Removed old curl library and wrote our own based on the WP HTTP api<br />- UPDATED: Generic function (and/or define) names - removed old function names that were not very specific and added (hopefully) appropriate naming<br />- UPDATED: Please sanitize, escape, and validate your POST calls - reviewed all input and applied applicable sanitation or encoding</p>
+	<p><B>= 1.2.2 = 12/8/2019</b><br />- INFO: Initial Submission to WordPress Official Plugins List<br />- ADDED: Created this file, readme.txt<br />- ADDED: Addon Email management - lists Emails / add new email accounts / modify email accounts / delete email accounts<br />- UPDATED: Encrypt cPanel credentials for storage in the database using AES-256 with generated key and iv<br />- ADDED: New Github repo</p>
+	<p><B>= 1.1.0 = 12/8/2019</b><br />- INFO: Added 3rd version identifier for security and patch updates. New format is Major.Minor.Patch<br />- UPDATED: Encrypt cPanel credentials for storage in the database using basic encryption and static key and iv</p>
+	<p><B>= 1.0 = 12/1/2019</b><br />- ADDED: Email listings - ability to add and delete<br />- ADDED: First savings of settings in database, plain text<br />- INFO: First Release</p>
+<?
 }
+
 function dt_cpanel_getDomainList() {
+	// Used to provide an array of all possible domain names associated to the account including main, addon, alias, and sub
 	$options = get_option( 'cpanel_settings' );
-	$cPanel = new DTcPanelAPI(dt_cpanel_crypt($options['cpun']), dt_cpanel_crypt($options['cppw']), '127.0.0.1');
+	$cPanel = new DTcPanelAPI(dt_cpanel_crypt($options['cpun']), urldecode(dt_cpanel_crypt($options['cppw'])), '127.0.0.1');
 	$response = $cPanel->DomainInfo->list_domains();
 	if (isset($response->errors[0]) && $response->errors[0] != ''){
 		dt_cpanel_error_notice($response->errors[0],1);
 	}
 
-	// Collect domain data, primary domain is always first
+	// Collect domain data, primary domain is always first, and concantenate into a single array
 	$domain_data[0] = $response->data->main_domain;
 	$alias = $response->data->parked_domains;
 	$addon = $response->data->addon_domains;
@@ -75,54 +91,51 @@ function dt_cpanel_getDomainList() {
 	if (sizeof($addon) > 0) { sort($addon); foreach($addon as $domain) { $domain_data[$c] = $domain; $c++; } }
 	if (sizeof($sub) > 0) { sort($sub); foreach($sub as $domain) { $domain_data[$c] = $domain; $c++; } }
 
-	return $domain_data;
+	return $domain_data; // Return array of domains
 }
 
 function dt_cpanel_settings_page() {
-	settings_fields( 'cpanel_settings' );
-	do_settings_sections( __FILE__ );
 	$options = get_option( 'cpanel_settings' );
 	echo "<h2>" . __( 'Settings Page', 'dt-cpanel-settings-page' ) . "</h2><BR>";
-
 	if (isset($_POST['settings_update']) && $_POST['settings_update'] == 1) {
 		echo "<B>Updating settings, please wait...</b><BR>";
-		update_option( 'cpanel_settings', array("cpun"=>dt_cpanel_crypt($_POST['cpun'],1),'cppw'=>dt_cpanel_crypt($_POST['cppw'],1)), '', 'yes' );
+		update_option( 'cpanel_settings', array("cpun"=>dt_cpanel_crypt(sanitize_user($_POST['cpun']),1),'cppw'=>dt_cpanel_crypt(urlencode($_POST['cppw']),1)), '', 'yes' );
         	echo("<meta http-equiv='refresh' content='0'>");
 	} else {
 		$cpun_value = '';
 		$cppw_value = '';
 		if (isset($options['cpun']) && $options['cpun'] != '') $cpun_value = dt_cpanel_crypt($options['cpun']);
-		if (isset($options['cppw']) && $options['cppw'] != '') $cppw_value = dt_cpanel_crypt($options['cppw']);
-		
+		if (isset($options['cppw']) && $options['cppw'] != '') $cppw_value = urldecode(dt_cpanel_crypt($options['cppw']));
 		echo "<form method=post>"; ?>
 			<th scope="row">cPanel Username:</th><td><input type="text" name="cpun" value="<? echo $cpun_value; ?>"></td><BR>
 			<th scope="row">cPanel Password:</th><td><input type="password" name="cppw" value="<? echo $cppw_value; ?>"></td>
 			<input type=hidden name=settings_update value=1><?
-		submit_button();
+			submit_button();
 		echo "</form>";
 	}
 }
 
-function dt_cpanel_error_notice($err_string, $exit) {
+function dt_cpanel_error_notice($err_string, $exit = 0) {
     ?>
     <div class="error notice">
-        <p><?php _e($err_string, 'dt-cpanel-settings-page' ); ?></p>
+        <p><?php _e($err_string, 'dt-cpanel-error' ); ?></p>
     </div>
     <?php
 	if ($exit) 
 		exit;
 }
 
-// Email Page
+// Email Sub Page
 function dt_cpanel_email() {
 	$options = get_option( 'cpanel_settings' );
-	$cPanel = new DTcPanelAPI(dt_cpanel_crypt($options['cpun']), dt_cpanel_crypt($options['cppw']), '127.0.0.1');
+	$cPanel = new DTcPanelAPI(dt_cpanel_crypt($options['cpun']), urldecode(dt_cpanel_crypt($options['cppw'])), '127.0.0.1');
 	// New style elements, need to move to css at some point
 	?><style>
 		tr.border_bottom td {  border-bottom:1pt solid black; }
+		hr.dark {  border-top:1pt solid black; max-width: 500px; margin-left: 0px;}
 		tr.border_bottom_lt td {  border-bottom:1pt solid #ccc; }
 	</style><?	
-	// Header
+	$_POST['email'] = sanitize_email($_POST['email']);
 	if (isset($_POST['email']) && $_POST['email'] != '') 
 		echo "<h1>" . __( 'Email Administration ('.$_POST['email'].')', 'dt-cpanel-email' ) . "</h1>";
 	else
@@ -130,6 +143,7 @@ function dt_cpanel_email() {
     
 	// Delete Operation Submitted
 	if (isset($_POST['delete']) && $_POST['delete'] == 1) {
+		$_POST['delemail'] = sanitize_email($_POST['delemail']);
 		list($user, $domain) = explode('@', $_POST['delemail']);
         	echo "<BR><B>Attempting to delete $user@$domain, please wait...</b><BR>";
 		$response = $cPanel->UserManager->delete_user([
@@ -151,14 +165,12 @@ function dt_cpanel_email() {
 			exit;
 		}
 		
-		$user = $_POST['user'];
-		$domain = $_POST['domain'];
+		$user = sanitize_user($_POST['user']);
+		$domain = sanitize_user($_POST['domain']);
 		if (isset($_POST['max']) && $_POST['max'] == 1)
 			$quota = 0;
-		else
+		else 
 			$quota = round($_POST['quota'],0);
-		if ($quota < 0) 
-			$quota = 2048;
 
 		echo "<B>Attempting to create $user@$domain, please wait...</a><BR>";
 		$response = $cPanel->UserManager->create_user([
@@ -194,8 +206,6 @@ function dt_cpanel_email() {
 				}
 			}
 		}
-		if ($quota < 0) 
-			$quota = 2048;
 		echo "<BR><table width=50%>";
 		echo "<tr class=border_bottom><td width=200px><B>Email Account</b></td><td>New Password</td><td><b>Quota in MB</b></td><td></td><td></td></tr>";
 	   	echo "<form method=post><tr><td valign=top>$user@$domain<input type=hidden name=email value=$user@$domain></td><td><input name=password type=textbox><BR>(Leave blank to not change)</td>";
@@ -211,8 +221,6 @@ function dt_cpanel_email() {
 			$quota = 0;
 		else
 			$quota = round($_POST['quota'],0);
-		if ($quota < 0) 
-			$quota = 2048;
 		list($user, $domain) = explode('@', $_POST['email']);
 		echo "<B>Attempting to update $user@$domain, please wait...</a><BR>";
 		if (isset($_POST['password']) && $_POST['password'] != '') {
@@ -237,7 +245,8 @@ function dt_cpanel_email() {
 		die("<meta http-equiv='refresh' content='0'>");
 	}
 
-	// Default Page Display
+
+	// Default Page Display Output
 	$response = $cPanel->Email->list_pops_with_disk();
 	if (isset($response->errors[0]) && $response->errors[0] != ''){
 		dt_cpanel_error_notice($response->errors[0],1);
@@ -262,14 +271,14 @@ function dt_cpanel_email() {
 			echo "<tr class=border_bottom_lt><td>".$odata[$i][0]."</td><td>".$odata[$i][1]."</td><td>".$odata[$i][2]."</td>";
 			echo "<form method=post><td><input type=hidden name=manage value=1><input type=hidden name=email value=".$odata[$i][0]."><input type=hidden name=quota value=".$odata[$i][2]."><input type=submit value=Manage></td></form></tr>";
 		}
-		echo "</table>";
+		echo "</table><BR>$i of $i Emails Displayed.";
 	} else 
 		echo "No Email Accounts to Display<BR>";
 
 
 	// Create new Email Form
 	$domain_list = dt_cpanel_getDomainList();
-   	echo "<form method=post><BR><BR><b>Create New Email Address: </b><table>";
+   	echo "<form method=post><BR><BR><BR><BR><HR class=dark><h2><b>Create New Email Address:</h2></b><table>";
 	echo "<tr><td>Email Address:</td><td><input autocomplete=lolwhut type=textbox name=user>@<select name=domain>";
 		foreach($domain_list as $dom) {
 			echo "<option value=$dom>$dom</option>";
