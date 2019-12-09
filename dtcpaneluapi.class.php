@@ -1,18 +1,10 @@
 <?php
 
 /**
- * PHP class to handle connections with cPanel's UAPI and API2 specifically through cURL requests as seamlessly and simply as possible.
+ * PHP class to handle connections with cPanel's UAPI specifically through WordPress's HTTP api
  *
  * For documentation on cPanel's UAPI:
  * @see https://documentation.cpanel.net/display/SDK/UAPI+Functions
- *
- * For documentation on cPanel's API2:
- * @see https://documentation.cpanel.net/display/SDK/Guide+to+cPanel+API+2
- *
- * Please use UAPI where possible, only use API2 where the equivalent doesn't exist for UAPI
- *
- * Based on original work by @author Toby New - www.source-control.co.uk
- * @link https://github.com/N1ghteyes/cpanel-UAPI-php-class
  *
  * Written to support WordPress HTTP-api by DigiTimber, December 2019
  */
@@ -20,29 +12,21 @@
 /**
  * Class DTWP_HTTP_cPanelAPI
  */
-class DTWP_HTTP_cPanelAPI
+class DTcPanelAPI
 {
     public $version = '1.0';
-    public $ssl = 1; //Bool - TRUE / FALSE for ssl connection
-    public $port = 2083; //default for ssl servers.
+    public $port = 2083; //default for cpanel SSL (2087 for WHM SSL)
     public $server = "127.0.0.1"; //default to localhost
-    public $maxredirect = 0; //Number of redirects to make, typically 0 is fine. on some shared setups this will need to be increased.
     public $user;
     public $json = '';
 
-    protected $scope; //String - Module we want to use
-    protected $api;
+    protected $module; //String - Module we want to use
     protected $auth;
     protected $pass;
-    protected $secret;
     protected $type;
     protected $session;
     protected $method;
     protected $requestUrl;
-    protected $eno;
-    protected $emes;
-    protected $token = FALSE;
-    protected $httpMethod = 'GET';
     protected $postData = '';
 
 
@@ -50,27 +34,12 @@ class DTWP_HTTP_cPanelAPI
      * @param $user
      * @param $pass
      * @param $server
-     * @param $secret
      */
-    function __construct($user, $pass, $server, $secret = FALSE)
+    function __construct($user, $pass, $server)
     {
         $this->user = $user;
         $this->pass = $pass;
         $this->server = $server;
-        if ($secret) {
-            $this->secret = $secret;
-            $this->set2Fa();
-        }
-    }
-
-    /**
-     * Include the ot class so we can generate a valid token for 2FA
-     */
-    protected function set2Fa()
-    {
-        require 'otphp/lib/otphp.php';
-        $totp = new \OTPHP\TOTP($this->secret);
-        $this->token = $totp->now();
     }
 
     public function __get($name)
@@ -82,47 +51,8 @@ class DTWP_HTTP_cPanelAPI
             case 'post':
                 $this->httpMethod = 'POST';
                 break;
-            case 'api2':
-                $this->setApi('api2');
-                break;
-            case 'uapi':
-                $this->setApi('uapi');
-                break;
             default:
                 $this->scope = $name;
-        }
-        return $this;
-    }
-
-    /**
-     * Set the api to use for connections.
-     * @param $api
-     * @return $this
-     * @throws Exception
-     */
-    protected function setApi($api)
-    {
-        $this->api = $api;
-        $this->setMethod();
-        return $this;
-    }
-
-    /**
-     * Function to set the method used to communicate with the chosen api.
-     * @return $this
-     * @throws Exception
-     */
-    protected function setMethod()
-    {
-        switch ($this->api) {
-            case 'uapi':
-                $this->method = '/execute/';
-                break;
-            case 'api2':
-                $this->method = '/json-api/cpanel/';
-                break;
-            default:
-                throw new Exception('$this->api is not set or is incorrectly set. The only available options are \'uapi\' or \'api2\'');
         }
         return $this;
     }
@@ -155,26 +85,12 @@ class DTWP_HTTP_cPanelAPI
      * @param $name
      * @param $arguments
      * @return bool|mixed
-     * @throws Exception
      */
     protected function APIcall($name, $arguments)
     {
         $this->auth = base64_encode($this->user . ":" . $this->pass);
-        $this->type = $this->ssl == 1 ? "https://" : "http://";
-        $this->requestUrl = $this->type . $this->server . ':' . $this->port . $this->method;
-        switch ($this->api) {
-            case 'uapi':
-                $this->requestUrl .= ($this->scope != '' ? $this->scope . "/" : '') . $name . '?';
-                break;
-            case 'api2':
-                if ($this->scope == '') {
-                    throw new Exception('Scope must be set.');
-                }
-                $this->requestUrl .= '?cpanel_jsonapi_user=' . $this->user . '&cpanel_jsonapi_apiversion=2&cpanel_jsonapi_module=' . $this->scope . '&cpanel_jsonapi_func=' . $name . '&';
-                break;
-            default:
-                throw new Exception('$this->api is not set or is incorrectly set. The only available options are \'uapi\' or \'api2\'');
-        }
+        $this->requestUrl = "https://" . $this->server . ':' . $this->port . $this->method;
+        $this->requestUrl .= ($this->module != '' ? $this->module . "/" : '') . $name . '?';
         if($this->httpMethod == 'GET') {
             $this->requestUrl .= http_build_query($arguments);
         }
@@ -183,111 +99,16 @@ class DTWP_HTTP_cPanelAPI
         }
 
         return $this->wp_http_api_request($this->requestUrl);
-        return $this->curl_request($this->requestUrl);
     }
 
-    /**
-     * @param $url
-     * @return bool|mixed
-     */
-    protected function curl_request($url)
-    {
-        $httpHeaders = array("Authorization: Basic " . $this->auth);
-        //If we have a token then send that with the request for 2FA.
-        if ($this->token) {
-            $httpHeaders[] = "X-CPANEL-OTP: " . $this->token;
-        }
-        $ch = curl_init();
-        if($this->httpMethod == 'POST'){
-            $httpHeaders[] = "Content-type: multipart/form-data";
-            curl_setopt($ch,CURLOPT_POSTFIELDS, $this->postData);
-        }
-        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
-        curl_setopt($ch, CURLOPT_HEADER, 0);
-        curl_setopt($ch, CURLOPT_URL, $url);
-        curl_setopt($ch, CURLOPT_HTTPHEADER, $httpHeaders);
-        curl_setopt($ch, CURLOPT_TIMEOUT, 100020);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
+    protected function wp_http_api_request($requestUrl) {
+        $args = array(
+                'headers' => array("Authorization" => "Basic ".$this->auth),
+                'sslverify' => false
+        );
 
-        $content = $this->curl_exec_follow($ch, $this->maxredirect);
-        $this->eno = curl_errno($ch);
-        $this->emes = curl_error($ch);
+        $response = wp_remote_retrieve_body(wp_remote_get($this->requestUrl, $args));
+        return $response;
 
-        curl_close($ch);
-
-        return $content;
-    }
-
-    protected function wp_http_api_request($url)
-    {
-
-        $httpHeaders = array("Authorization: Basic " . $this->auth);
-        //If we have a token then send that with the request for 2FA.
-	if ($this->token) {
-        	$httpHeaders[] = "X-CPANEL-OTP: " . $this->token;
-	}
-        if($this->httpMethod == 'POST'){
-	        $httpHeaders[] = "Content-type: multipart/form-data";
-		
-		$pload = array(
-		'method' => 'POST',
-		'timeout' => 30,
-		'redirection' => 5,
-		'httpversion' => '1.0',
-		'blocking' => true,
-		'headers' => $httpHeaders,
-		'body' => $this->postData,
-		'cookies' => array()
-		);
-		$content = wp_remote_post($url, $pload);
-	} else {
-		$content = wp_remote_get($url, array('headers' => $httpHeaders,'cookies' => array()));
-	}
-
-        return $content;
-    }
-
-    /**
-     * @param $ch
-     * @param null $maxredirect
-     * @return bool|mixed
-     */
-    protected function curl_exec_follow($ch, &$maxredirect = null)
-    {
-        // we emulate a browser here since some websites detect
-        // us as a bot and don't let us do our job
-        $user_agent = "Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.7.5)" .
-            " Gecko/20041107 Firefox/1.0";
-        curl_setopt($ch, CURLOPT_USERAGENT, $user_agent);
-
-        $mr = $maxredirect === null ? 5 : intval($maxredirect);
-
-        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, $mr > 0);
-        curl_setopt($ch, CURLOPT_MAXREDIRS, $mr);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, FALSE);
-        return curl_exec($ch);
-    }
-
-    /**
-     * Function to get the last request made
-     * @return mixed
-     */
-    public function getLastRequest()
-    {
-        return $this->requestUrl;
-    }
-
-    /**
-     * Function to return the error if there was one, or FALSE if not.
-     * @return array|bool
-     */
-    public function getError()
-    {
-        if (!empty($this->eno)) {
-            return ['no' => $this->eno, 'message' => $this->emes];
-        }
-        return FALSE;
     }
 }
