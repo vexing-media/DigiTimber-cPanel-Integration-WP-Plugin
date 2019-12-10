@@ -324,9 +324,6 @@ function dt_cpanel_crypt($string,$action = false) {
 }
 
 function dt_cpanel_uninstallPlugin() {
-	if (!defined('WP_UNINSTALL_PLUGIN')) {
-		die;
-	}
 	delete_option('cpanel_key');
 	delete_option('cpanel_settings');
 }
