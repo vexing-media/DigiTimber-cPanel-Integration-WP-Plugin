@@ -1,12 +1,12 @@
 === DigiTimber cPanel Integration ===
 Contributors: digitimber
-Donate link: http://www.digitimber.com/wpdonate
 Tags: cPanel, email, manage
 Requires PHP: 7.1
 Requires at least: 5.0
 Tested up to: 5.3
 Stable tag: 1.3.2
-
+License: GPLv2 or later
+License URI: http://www.gnu.org/licenses/gpl-2.0.html
 == Description ==
 
 DigiTimber cPanel Integration allows users to access basic cPanel functionality from within WordPress. This plugin was created initially for our own user, but decided that with the lack of any other plugins in the list, we'd toss it out there for others. Hopefully its helpful to you and your users!
@@ -58,7 +58,15 @@ Currently there is no documentation besides this readme. More will become availa
 
 Not at this time. 
 
+# How do I contact someone for support of this plugin?
+
+While we don't offer any offical support for this plugin, please email plugin@digitimber.com or post to the WordPress support forum and we will attempt to assist to the best of our abilities. 
+
 == Changelog ==
+
+= 1.3.3 = 2/7/2020
+- BUGFIX (Issue#9): Unable to delete email accounts created in cPanel
+- ADDED: Created a settings section to allow users to select which domains are seen in the plugin (in case people want to limit for large accounts) (defaults to all enabled)
 
 = 1.3.2 = 12/9/2019
 - INFO: After submission to WP Plugin Directory, we had a few things to fix
