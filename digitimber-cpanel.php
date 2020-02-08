@@ -343,15 +343,6 @@ function dt_cpanel_email() {
 	</form>";
 }
 
-function dt_array_contains($str, array $arr)
-{
-    foreach($arr as $a) {
-        if (stripos($str,$a) !== false) return true;
-    }
-    return false;
-}
-
-
 // Encrypt and Decryption function for cpanel credentials using OpenSSL
 function dt_cpanel_crypt($string,$action = false) {
         settings_fields( 'cpanel_key' );
@@ -371,5 +362,3 @@ function dt_cpanel_crypt($string,$action = false) {
 	return $output;
 }
 
-
-?>
