@@ -20,7 +20,7 @@ register_uninstall_hook( __FILE__, 'dt_cpanel_uninstall');
 
 function dt_cpanel_activate(){
 	//need to check and see if keys exist, if they do, don't regenerate
-	if(empty(get_option("dt_cpanel_key"))){
+	if(!get_option("dt_cpanel_key")){
 		dt_cpanel_register_settings();
 		dt_cpanel_createRandomKeys();
 	}
