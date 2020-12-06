@@ -1,10 +1,10 @@
 === DigiTimber cPanel Integration ===
 Contributors: digitimber
-Tags: cPanel, email, manage
+Tags: cPanel, email, mail, manage
 Requires PHP: 7.1
 Requires at least: 5.0
 Tested up to: 5.5.3
-Stable tag: 1.4.4
+Stable tag: 1.4.5
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 == Description ==
@@ -63,6 +63,19 @@ Not at this time.
 While we don't offer any offical support for this plugin, please email plugin@digitimber.com or post to the WordPress support forum and we will attempt to assist to the best of our abilities. 
 
 == Changelog ==
+
+= 1.4.5 = 12/6/2020 
+- INFO: 1 Year Anniversary - Thank you to everyone who has helped us and to all of those who are enjoying this plugin!
+- UPDATED: Simplification of activation code into single function call
+- UPDATED: Cleanup and commenting of additional code blocks
+- UPDATED: Reorganized code blocks for easier review and editing
+- FIXED: Added proper error condition when cPanel connection is NULL
+- FIXED: Error checking and better error handling throughout
+- FIXED: Removed abrupt code ends (die, exit) and allowed them to close appropriately
+- ADDED: Added simple javascript 'toggle all' button on settings page for domain lists longer than 6 elements
+- UPDATED: Renamed Menu to from DigiTimber cPanel to cPanel Integration
+- UPDATED: Renamed Menu to Email to Email Administration
+- ADDED: Removed existing readme/text from main plugin page and added basic stats and links. 
 
 = 1.4.4 = 12/5/2020 
 - BUGFIX (Issue#11): Added proper check for username/password validation. Settings page now details if the login works or not and provides proper error notification.
