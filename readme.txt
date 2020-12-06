@@ -3,7 +3,7 @@ Contributors: digitimber
 Tags: cPanel, email, manage
 Requires PHP: 7.1
 Requires at least: 5.0
-Tested up to: 5.3
+Tested up to: 5.5.3
 Stable tag: 1.4.3
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
@@ -63,6 +63,9 @@ Not at this time.
 While we don't offer any offical support for this plugin, please email plugin@digitimber.com or post to the WordPress support forum and we will attempt to assist to the best of our abilities. 
 
 == Changelog ==
+
+= 1.4.3 = 12/5/2020
+- BUGFIX: Resolved an issue with activation/deactivation/uninstall - could cause issues with other plugins 
 
 = 1.3.3 = 2/7/2020
 - BUGFIX (Issue#9): Unable to delete email accounts created in cPanel
