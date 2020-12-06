@@ -3,7 +3,7 @@
 Plugin Name: DigiTimber cPanel Integration
 Plugin URI: https://github.com/vexing-media/DigiTimber-cPanel-Integration-WP-Plugin
 Description: Access basic cPanel functions (currently limited to email) from within WordPress. This allows your customers to use the interface that they already know and love to perform basic admin tasks.
-Version: 1.3.3
+Version: 1.4.0
 Author: DigiTimber
 Author URI: https://www.digitimber.com/
 License: GPL2
@@ -14,7 +14,30 @@ You should have received a copy of the GNU General Public License along with Dig
 
 require_once("dtcpaneluapi.class.php");
 
-add_action( 'admin_menu', 'digitimber_cpanel_menu' );  
+add_action( 'admin_menu', 'digitimber_cpanel_menu' );
+register_activation_hook( __FILE__, 'dt_cpanel_activate' );
+register_uninstall_hook( __FILE__, 'dt_cpanel_uninstall');
+
+function dt_cpanel_activate(){
+	//need to check and see if keys exist, if they do, don't regenerate
+	if(empty(get_option("dt_cpanel_key"))){
+		dt_cpanel_register_settings();
+		dt_cpanel_createRandomKeys();
+	}
+}
+
+function dt_cpanel_uninstall(){
+	//remove the old version settings
+	delete_option("cpanel_key");
+	delete_option("cpanel_settings");
+	delete_option("cpanel_domains");
+
+	//remove the settings
+	delete_option("dt_cpanel_key");
+	delete_option("dt_cpanel_settings");
+	delete_option("dt_cpanel_domains");
+}
+
 function digitimber_cpanel_menu() {
     // Add Toplevel
     add_menu_page(__('DigiTimber cPanel','digitimber-cpanel'), __('DigiTimber cPanel','digitimber-cpanel'), 'administrator', 'dt-top-level-handle', 'dt_cpanel_main_page', 'dashicons-admin-tools' );
@@ -25,25 +48,23 @@ function digitimber_cpanel_menu() {
     // Add a submenu for Settings (Also create a Settings -> cPanel Settings section)
     add_submenu_page('dt-top-level-handle', __('Settings','dt-cpanel-settings-page'), __('Settings','dt-cpanel-settings-page'), 'administrator', 'dt-cpanel-settings-page', 'dt_cpanel_settings_page');
     add_options_page(__('cPanel Settings','digitimber-cpanel'), __('cPanel Settings','digitimber-cpanel'), 'administrator', 'dt-cpanel-settings-page', 'dt_cpanel_settings_page');
-
 } 
 
-add_action( 'admin_init', 'dt_cpanel_register_settings' );
 function dt_cpanel_register_settings() {   
 	// Register the options we are going to use
-        register_setting( 'cpanel_key', 'cpanel_key' ); 
-        register_setting( 'cpanel_settings', 'cpanel_settings' ); 
-        register_setting( 'cpanel_domains', 'cpanel_domains' ); 
+    register_setting( 'dt_cpanel_key', 'dt_cpanel_key' ); 
+    register_setting( 'dt_cpanel_settings', 'dt_cpanel_settings' ); 
+    register_setting( 'dt_cpanel_domains', 'dt_cpanel_domains' ); 
 }
 
-add_action( 'admin_init', 'dt_cpanel_createRandomKeys' );
+
 function dt_cpanel_createRandomKeys() {
 	// On first install, generate keys for use in encrypting the cPanel credentials and store them in the database
-	settings_fields( 'cpanel_key' );
+	settings_fields( 'dt_cpanel_key' );
 	do_settings_sections( __FILE__ );
 	$k1 = base64_encode(openssl_random_pseudo_bytes(32));
 	$k2 = base64_encode(openssl_random_pseudo_bytes(64));
-	add_option( 'cpanel_key', array("key1"=>$k1,"key2"=>$k2), '', 'yes' );
+	add_option( 'dt_cpanel_key', array("key1"=>$k1,"key2"=>$k2), '', 'yes' );
 }
 
 // Main page of the plugin - just data for now
@@ -74,7 +95,7 @@ function dt_cpanel_main_page() {
 
 function dt_cpanel_getDomainList() {
 	// Used to provide an array of all possible domain names associated to the account including main, addon, alias, and sub
-	$options = get_option( 'cpanel_settings' );
+	$options = get_option( 'dt_cpanel_settings' );
 	$cPanel = new DTcPanelAPI(dt_cpanel_crypt($options['cpun']), urldecode(dt_cpanel_crypt($options['cppw'])), '127.0.0.1');
 	$response = $cPanel->DomainInfo->list_domains();
 	if (isset($response->errors[0]) && $response->errors[0] != ''){
@@ -95,8 +116,8 @@ function dt_cpanel_getDomainList() {
 }
 
 function dt_cpanel_settings_page() {
-	$options = get_option( 'cpanel_settings' );
-	$cpanel_domains = get_option( 'cpanel_domains' );
+	$options = get_option( 'dt_cpanel_settings' );
+	$dt_cpanel_domains = get_option( 'dt_cpanel_domains' );
 	echo "<h2>" . __( 'Settings Page', 'dt-cpanel-settings-page' ) . "</h2><BR>";
 	if (isset($_POST['settings_update']) && $_POST['settings_update'] == 1) {
 		if ( !isset($_POST['settings_update_nonce']) || !wp_verify_nonce($_POST['settings_update_nonce'], 'settings_update_nonce')) 
@@ -107,7 +128,7 @@ function dt_cpanel_settings_page() {
 		foreach($_POST['show_array'] as $domain) {
 			array_push($show_array, $domain); // Grab all the arrays that were enabled and drop them into an array for storage
 		}
-		update_option( 'cpanel_settings', array("cpun"=>dt_cpanel_crypt(sanitize_user($_POST['cpun']),1),
+		update_option( 'dt_cpanel_settings', array("cpun"=>dt_cpanel_crypt(sanitize_user($_POST['cpun']),1),
 							'cppw'=>dt_cpanel_crypt(urlencode($_POST['cppw']),1)), '', 'yes' );
 		if (sizeof($show_array) <= 0) { // If the list is blank, probably our first run (or the user has unselected everything... 
 			$domain_list = dt_cpanel_getDomainList(); // Generate a list of what we can pull and drop them into an array to save
@@ -115,7 +136,7 @@ function dt_cpanel_settings_page() {
 				array_push($show_array, $domain); // Grab all the arrays that were enabled and drop them into an array for storage
 			}
 		}
-		update_option( 'cpanel_domains', array('show_array'=>$show_array), '', 'yes' );
+		update_option( 'dt_cpanel_domains', array('show_array'=>$show_array), '', 'yes' );
         	echo("<meta http-equiv='refresh' content='0'>");
 	} else {
 		$domain_list = dt_cpanel_getDomainList();
@@ -123,14 +144,14 @@ function dt_cpanel_settings_page() {
 		$cppw_value = '';
 		if (isset($options['cpun']) && $options['cpun'] != '') $cpun_value = dt_cpanel_crypt($options['cpun']);
 		if (isset($options['cppw']) && $options['cppw'] != '') $cppw_value = urldecode(dt_cpanel_crypt($options['cppw']));
-		if (isset($cpanel_domains)) 
-			$show_array = $cpanel_domains['show_array'];
+		if (isset($dt_cpanel_domains)) 
+			$show_array = $dt_cpanel_domains['show_array'];
 		else
 			$show_array = array();
 		$d=0;
 		echo "<form method=post autocomplete=off>";
 
-		if (isset($cpanel_domains) && is_array($cpanel_domains)) {
+		if (isset($dt_cpanel_domains) && is_array($dt_cpanel_domains)) {
 			echo "<table><tr><td>Select which domains should be accessible by this plugin:<BR></td></tr>";
         	        foreach($domain_list as $dom) {
 				if (in_array($dom, $show_array)) { $checked = "checked"; } else { $checked = ""; }
@@ -162,9 +183,9 @@ function dt_cpanel_error_notice($err_string, $exit = 0) {
 
 // Email Sub Page
 function dt_cpanel_email() {
-	$options = get_option( 'cpanel_settings' );
-	$cpanel_domains = get_option( 'cpanel_domains' );
-	$show_array = $cpanel_domains['show_array'];
+	$options = get_option( 'dt_cpanel_settings' );
+	$dt_cpanel_domains = get_option( 'dt_cpanel_domains' );
+	$show_array = $dt_cpanel_domains['show_array'];
 	$cPanel = new DTcPanelAPI(dt_cpanel_crypt($options['cpun']), urldecode(dt_cpanel_crypt($options['cppw'])), '127.0.0.1');
 	// New style elements, need to move to css at some point
 	?><style>
@@ -345,9 +366,9 @@ function dt_cpanel_email() {
 
 // Encrypt and Decryption function for cpanel credentials using OpenSSL
 function dt_cpanel_crypt($string,$action = false) {
-        settings_fields( 'cpanel_key' );
+        settings_fields( 'dt_cpanel_key' );
         do_settings_sections( __FILE__ );
-	$key = get_option( 'cpanel_key' );
+	$key = get_option( 'dt_cpanel_key' );
 	$cipher = "aes-256-cbc";
 	if (in_array($cipher, openssl_get_cipher_methods())) {
 		$iv = substr( hash( 'sha256', $key['key1'] ), 0, 16 );
@@ -357,7 +378,7 @@ function dt_cpanel_crypt($string,$action = false) {
 			$output = openssl_decrypt($string, $cipher, $key['key2'], $options=0, $iv);
 		}
 	} else {
-	        add_settings_error('cpanel_settings', 'cpanel_invalid_entry', 'Invalid cipher! Please check that your host supports openssl using aes-256-cbc.', $type = 'error');
+	        add_settings_error('dt_cpanel_settings', 'cpanel_invalid_entry', 'Invalid cipher! Please check that your host supports openssl using aes-256-cbc.', $type = 'error');
 	}
 	return $output;
 }
