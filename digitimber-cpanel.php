@@ -3,7 +3,7 @@
 Plugin Name: DigiTimber cPanel Integration
 Plugin URI: https://github.com/vexing-media/DigiTimber-cPanel-Integration-WP-Plugin
 Description: Access basic cPanel functions (currently limited to email) from within WordPress. This allows your customers to use the interface that they already know and love to perform basic admin tasks.
-Version: 1.4.0
+Version: 1.4.1
 Author: DigiTimber
 Author URI: https://www.digitimber.com/
 License: GPL2
@@ -69,9 +69,11 @@ function dt_cpanel_createRandomKeys() {
 
 // Main page of the plugin - just data for now
 function dt_cpanel_main_page() {
-	echo "<h2>" . __( 'DigiTimber cPanel Integration', 'digitimber-cpanel' ) . "</h2><BR>";
-	echo "Plugin Name: DigiTimber cPanel Integration Plugin<BR>"; ?>
-	Plugin URI: <a href="https://github.com/vexing-media/DigiTimber-cPanel-Integration-WP-Plugin">https://github.com/vexing-media/DigiTimber-cPanel-Integration-WP-Plugin</a>
+    //create html variable for the page info, echo at the end
+    $html = "";
+	$html .= "<h2>" . __( 'DigiTimber cPanel Integration', 'digitimber-cpanel' ) . "</h2><BR>";
+	$html .= "Plugin Name: DigiTimber cPanel Integration Plugin<BR>";
+	$html .= "Plugin URI: <a href='https://github.com/vexing-media/DigiTimber-cPanel-Integration-WP-Plugin'>https://github.com/vexing-media/DigiTimber-cPanel-Integration-WP-Plugin</a>
 	<p><h2>== Description ==</h2></p>
 	<p>DigiTimber cPanel Integration allows users to access basic cPanel functionality from within WordPress. This plugin was created initially for our own user, but decided that with the lack of any other plugins in the list, we'd toss it out there for others. Hopefully its helpful to you and your users!</p>
 	<p>Currently limited to email administration, but more is planned.</p>
@@ -79,7 +81,7 @@ function dt_cpanel_main_page() {
 	<p><H3>= Is it secure to have my cPanel login credentials in my WordPress? =</p>
 	<p>It's as secure as your wordpress site. We store the credentials using AES-256 encryption in the WordPress database. The salt and iv are computed once on installation so each installation is unique.</p>
 	<p><H3>= Is there an undo option? =</p>
-	<p>No. Unfortunately all changes made are immediately caried out on the server. Data loss may occur if you use the delete or modify options. Please ensure you have a valid backup of your data on cPanel while using any remote plugin.</p>
+	<p>No. Unfortunately all changes made are immediately carried out on the server. Data loss may occur if you use the delete or modify options. Please ensure you have a valid backup of your data on cPanel while using any remote plugin.</p>
 	<p><H3>= Where is all the documentation? =</p>
 	<p>Currently there is no documentation besides this readme. More will become available as we add additional functionality.</p>
 	<p><H3>= Do you make any other plugins? =</p>
@@ -89,8 +91,9 @@ function dt_cpanel_main_page() {
 	<p><B>= 1.3.2 = 12/9/2019</b><br />- INFO: After submission to WP Plugin Directory, we had a few things to fix<br />- UPDATED: Changed the overall name of the plugin to DigiTimber cPanel Integration<br />- UPDATED: Including your own CURL code - Removed old curl library and wrote our own based on the WP HTTP api<br />- UPDATED: Generic function (and/or define) names - removed old function names that were not very specific and added (hopefully) appropriate naming<br />- UPDATED: Please sanitize, escape, and validate your POST calls - reviewed all input and applied applicable sanitation or encoding<br />- UPDATED: Nonces and user permissions - added wp required nonce fields and validation to user input forms</p>
 	<p><B>= 1.2.2 = 12/8/2019</b><br />- INFO: Initial Submission to WordPress Official Plugins List<br />- ADDED: Created this file, readme.txt<br />- ADDED: Addon Email management - lists Emails / add new email accounts / modify email accounts / delete email accounts<br />- UPDATED: Encrypt cPanel credentials for storage in the database using AES-256 with generated key and iv<br />- ADDED: New Github repo</p>
 	<p><B>= 1.1.0 = 12/8/2019</b><br />- INFO: Added 3rd version identifier for security and patch updates. New format is Major.Minor.Patch<br />- UPDATED: Encrypt cPanel credentials for storage in the database using basic encryption and static key and iv</p>
-	<p><B>= 1.0 = 12/1/2019</b><br />- ADDED: Email listings - ability to add and delete<br />- ADDED: First savings of settings in database, plain text<br />- INFO: First Release</p>
-<?
+    <p><B>= 1.0 = 12/1/2019</b><br />- ADDED: Email listings - ability to add and delete<br />- ADDED: First savings of settings in database, plain text<br />- INFO: First Release</p>";
+    //echo the page info
+    echo $html;
 }
 
 function dt_cpanel_getDomainList() {
@@ -159,24 +162,26 @@ function dt_cpanel_settings_page() {
 				$d++;
        		        }
 		}
-		?>
+		$html = "
 			</table><BR><BR><table>
-			<tr><td>cPanel Username:</td><td><input type="text" name="cpun" value="<? echo $cpun_value; ?>"></td></tr>
-			<tr><td>cPanel Password:</td><td><input type="password" name="cppw" value="<? echo $cppw_value; ?>"></td></tr>
+			<tr><td>cPanel Username:</td><td><input type='text' name='cpun' value='".$cpun_value."'></td></tr>
+			<tr><td>cPanel Password:</td><td><input type='password' name='cppw' value='".$cppw_value."'></td></tr>
 			</table>
-			<input type=hidden name=settings_update value=1><?
-			wp_nonce_field( 'settings_update_nonce', 'settings_update_nonce' );
-			submit_button();
+            <input type=hidden name=settings_update value=1>";
+        echo $html;
+        wp_nonce_field( 'settings_update_nonce', 'settings_update_nonce' );
+        submit_button();
 		echo "</form>";
 	}
 }
 
 function dt_cpanel_error_notice($err_string, $exit = 0) {
-    ?>
-    <div class="error notice">
-        <p><?php _e($err_string, 'dt-cpanel-error' ); ?></p>
-    </div>
-    <?php
+    $html = "
+    <div class='error notice'>
+        <p>"._e($err_string, 'dt-cpanel-error' )."</p>
+    </div>";
+    echo $html;
+
 	if ($exit) 
 		exit;
 }
@@ -188,11 +193,12 @@ function dt_cpanel_email() {
 	$show_array = $dt_cpanel_domains['show_array'];
 	$cPanel = new DTcPanelAPI(dt_cpanel_crypt($options['cpun']), urldecode(dt_cpanel_crypt($options['cppw'])), '127.0.0.1');
 	// New style elements, need to move to css at some point
-	?><style>
+	echo "<style>
 		tr.border_bottom td {  border-bottom:1pt solid black; }
 		hr.dark {  border-top:1pt solid black; max-width: 500px; margin-left: 0px;}
 		tr.border_bottom_lt td {  border-bottom:1pt solid #ccc; }
-	</style><?	
+    </style>";
+    
 	$_POST['email'] = sanitize_email($_POST['email']);
 	if (isset($_POST['email']) && $_POST['email'] != '') 
 		echo "<h1>" . __( 'Email Administration ('.$_POST['email'].')', 'dt-cpanel-email' ) . "</h1>";
