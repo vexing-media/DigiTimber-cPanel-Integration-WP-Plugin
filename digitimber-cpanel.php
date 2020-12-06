@@ -153,7 +153,7 @@ function dt_cpanel_settings_page() {
 		$d=0;
 		echo "<form method=post autocomplete=off>";
 
-		if (isset($dt_cpanel_domains) && is_array($dt_cpanel_domains) && sizeof($domain_list > 0)) {
+		if (isset($dt_cpanel_domains) && is_array($dt_cpanel_domains) && sizeof($domain_list) > 0) {
 			echo "<table><tr><td>Select which domains should be accessible by this plugin:<BR></td></tr>";
         	        foreach($domain_list as $dom) {
 				if (in_array($dom, $show_array)) { $checked = "checked"; } else { $checked = ""; }
