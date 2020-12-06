@@ -3,7 +3,7 @@
 Plugin Name: DigiTimber cPanel Integration
 Plugin URI: https://github.com/vexing-media/DigiTimber-cPanel-Integration-WP-Plugin
 Description: Access basic cPanel functions (currently limited to email) from within WordPress. This allows your customers to use the interface that they already know and love to perform basic admin tasks.
-Version: 1.4.3
+Version: 1.4.4
 Author: DigiTimber
 Author URI: https://www.digitimber.com/
 License: GPL2
@@ -85,13 +85,7 @@ function dt_cpanel_main_page() {
 	<p><H3>= Where is all the documentation? =</p>
 	<p>Currently there is no documentation besides this readme. More will become available as we add additional functionality.</p>
 	<p><H3>= Do you make any other plugins? =</p>
-	<p>Not at this time.</p>
-	<p><H2>== Changelog ==</h2></p>
-	<p><B>= 1.3.3 = 2/7/2020</b><br />- BUGFIX (Issue#9): Unable to delete email accounts created in cPanel<br />- ADDED: Created a settings section to allow users to select which domains are seen in the plugin (in case people want to limit for large accounts) (defaults to all enabled)</p>
-	<p><B>= 1.3.2 = 12/9/2019</b><br />- INFO: After submission to WP Plugin Directory, we had a few things to fix<br />- UPDATED: Changed the overall name of the plugin to DigiTimber cPanel Integration<br />- UPDATED: Including your own CURL code - Removed old curl library and wrote our own based on the WP HTTP api<br />- UPDATED: Generic function (and/or define) names - removed old function names that were not very specific and added (hopefully) appropriate naming<br />- UPDATED: Please sanitize, escape, and validate your POST calls - reviewed all input and applied applicable sanitation or encoding<br />- UPDATED: Nonces and user permissions - added wp required nonce fields and validation to user input forms</p>
-	<p><B>= 1.2.2 = 12/8/2019</b><br />- INFO: Initial Submission to WordPress Official Plugins List<br />- ADDED: Created this file, readme.txt<br />- ADDED: Addon Email management - lists Emails / add new email accounts / modify email accounts / delete email accounts<br />- UPDATED: Encrypt cPanel credentials for storage in the database using AES-256 with generated key and iv<br />- ADDED: New Github repo</p>
-	<p><B>= 1.1.0 = 12/8/2019</b><br />- INFO: Added 3rd version identifier for security and patch updates. New format is Major.Minor.Patch<br />- UPDATED: Encrypt cPanel credentials for storage in the database using basic encryption and static key and iv</p>
-    <p><B>= 1.0 = 12/1/2019</b><br />- ADDED: Email listings - ability to add and delete<br />- ADDED: First savings of settings in database, plain text<br />- INFO: First Release</p>";
+	<p>Not at this time.</p>";
     //echo the page info
     echo $html;
 }
@@ -106,7 +100,12 @@ function dt_cpanel_getDomainList() {
 	}
 
 	// Collect domain data, primary domain is always first, and concantenate into a single array
-	$domain_data[0] = $response->data->main_domain;
+        if ($response->data->main_domain != "") {
+                $domain_data[0] = $response->data->main_domain;
+        } else {
+                dt_cpanel_error_notice("The login information provided does not appear to be correct. Please check your username and password and try again.",0);
+        }
+
 	$alias = $response->data->parked_domains;
 	$addon = $response->data->addon_domains;
 	$sub = $response->data->sub_domains;
@@ -154,7 +153,7 @@ function dt_cpanel_settings_page() {
 		$d=0;
 		echo "<form method=post autocomplete=off>";
 
-		if (isset($dt_cpanel_domains) && is_array($dt_cpanel_domains)) {
+		if (isset($dt_cpanel_domains) && is_array($dt_cpanel_domains) && size_of($dt_cpanel_domains > 0)) {
 			echo "<table><tr><td>Select which domains should be accessible by this plugin:<BR></td></tr>";
         	        foreach($domain_list as $dom) {
 				if (in_array($dom, $show_array)) { $checked = "checked"; } else { $checked = ""; }
@@ -176,12 +175,7 @@ function dt_cpanel_settings_page() {
 }
 
 function dt_cpanel_error_notice($err_string, $exit = 0) {
-    $html = "
-    <div class='error notice'>
-        <p>"._e($err_string, 'dt-cpanel-error' )."</p>
-    </div>";
-    echo $html;
-
+	printf( '<div class="notice notice-error"><p>%1$s</p></div>', esc_html($err_string));
 	if ($exit) 
 		exit;
 }
