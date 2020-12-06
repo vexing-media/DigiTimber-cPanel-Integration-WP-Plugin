@@ -3,7 +3,7 @@
 Plugin Name: DigiTimber cPanel Integration
 Plugin URI: https://github.com/vexing-media/DigiTimber-cPanel-Integration-WP-Plugin
 Description: Access basic cPanel functions (currently limited to email) from within WordPress. This allows your customers to use the interface that they already know and love to perform basic admin tasks.
-Version: 1.4.2
+Version: 1.4.3
 Author: DigiTimber
 Author URI: https://www.digitimber.com/
 License: GPL2
@@ -60,8 +60,8 @@ function dt_cpanel_register_settings() {
 
 function dt_cpanel_createRandomKeys() {
 	// On first install, generate keys for use in encrypting the cPanel credentials and store them in the database
-	settings_fields( 'dt_cpanel_key' );
-	do_settings_sections( __FILE__ );
+	// settings_fields( 'dt_cpanel_key' );
+	// do_settings_sections( __FILE__ );
 	$k1 = base64_encode(openssl_random_pseudo_bytes(32));
 	$k2 = base64_encode(openssl_random_pseudo_bytes(64));
 	add_option( 'dt_cpanel_key', array("key1"=>$k1,"key2"=>$k2), '', 'yes' );
