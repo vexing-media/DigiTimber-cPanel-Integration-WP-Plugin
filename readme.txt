@@ -9,7 +9,7 @@ License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 == Description ==
 
-DigiTimber cPanel Integration allows users to access basic cPanel functionality from within WordPress. This plugin was created initially for our own user, but decided that with the lack of any other plugins in the list, we'd toss it out there for others. Hopefully its helpful to you and your users!
+DigiTimber cPanel Integration allows users to access basic cPanel functionality from within WordPress. This plugin was created initially for our own users, but decided that with the lack of any other plugins in the list, we'd toss it out there for others. Hopefully its helpful to you and your users!
 
 Currently limited to email administration, but more is planned.
 - View a list of all email accounts for all domains.
@@ -63,6 +63,8 @@ Not at this time.
 While we don't offer any offical support for this plugin, please email plugin@digitimber.com or post to the WordPress support forum and we will attempt to assist to the best of our abilities. 
 
 == Changelog ==
+= 1.4.6 = 1/24/2020 
+- BUGFIX (Issue#12): The plugin generated 1 character of unexpected output during activation... - Removed erronious newline at top of file causing output
 
 = 1.4.5 = 12/6/2020 
 - INFO: 1 Year Anniversary - Thank you to everyone who has helped us and to all of those who are enjoying this plugin!
