@@ -3,7 +3,7 @@
 Plugin Name: DigiTimber cPanel Integration
 Plugin URI: https://github.com/vexing-media/DigiTimber-cPanel-Integration-WP-Plugin
 Description: Access basic cPanel functions (currently limited to email) from within WordPress. This allows your customers to use the interface that they already know and love to perform basic admin tasks.
-Version: 1.4.6
+Version: 1.4.8
 Author: DigiTimber
 Author URI: https://www.digitimber.com/
 License: GPL2
@@ -250,7 +250,7 @@ function dt_cpanel_email() {
 	if (isset($_POST['delete']) && $_POST['delete'] == 1) {
 		if ( !isset($_POST['delete_nonce']) || !wp_verify_nonce($_POST['delete_nonce'], 'dt-cpanel-email-delete')) {
 			dt_cpanel_error_notice("Sorry, we can't seem to validate that this request was submitted correctly. Please check your settings and try again.");
-			return;
+			wp_die();
 		}
 		$_POST['delemail'] = sanitize_email($_POST['delemail']);
 		list($user, $domain) = explode('@', $_POST['delemail']);
@@ -269,7 +269,7 @@ function dt_cpanel_email() {
 */
 			
 		if (isset($response->errors[0]) && $response->errors[0] != ''){
-			dt_cpanel_error_notice($response->errors[0]);
+			dt_cpanel_error_notice("cPanel Returned an error: ". $response->errors[0]);
 			return;
 		}
 		echo("<meta http-equiv='refresh' content='0'>");
@@ -456,6 +456,7 @@ function dt_cpanel_settings_page() {
 	if (isset($_POST['settings_update']) && $_POST['settings_update'] == 1) {
 		if ( !isset($_POST['settings_update_nonce']) || !wp_verify_nonce($_POST['settings_update_nonce'], 'settings_update_nonce')) {
 			dt_cpanel_error_notice("Sorry, we can't seem to validate that this request was submitted correctly. Please check your settings and try again.",1);
+			wp_die();
 		}
 		echo "<B>Updating settings, please wait...</b><BR>";
 		$show_array = array(); // Init Array we are going to push to
@@ -464,6 +465,19 @@ function dt_cpanel_settings_page() {
 				array_push($show_array, $domain); // Grab all the arrays that were enabled and drop them into an array for storage
 			}
 		}
+
+		if (!preg_match('/^[a-zA-Z0-9_.-]+$/', $_POST['cpun'])) {
+			wp_die('Invalid input for cpun.');
+		}
+		$cpun = sanitize_text_field($_POST['cpun']);
+
+		if (empty($_POST['cppw'])) {
+			wp_die('Password (cppw) cannot be empty.');
+		}
+		if (!preg_match('/^[\x20-\x7E]+$/', $_POST['cppw'])) { // Ensure only printable ASCII characters
+			wp_die('Password (cppw) contains invalid characters.');
+		}
+
 		update_option( 'dt_cpanel_settings', array('cpun'=>dt_cpanel_crypt(sanitize_user($_POST['cpun']),1),
 						   'cppw'=>dt_cpanel_crypt(urlencode($_POST['cppw']),1)), '', 'yes' );
 
@@ -483,7 +497,7 @@ function dt_cpanel_settings_page() {
 		// Loading the page without any submission, attempt to grab a domain list (will error if login is incorrect)
 		$domain_list = dt_cpanel_getDomainList();
 		if (isset($options['cpun']) && $options['cpun'] != '') $cpun_value = dt_cpanel_crypt($options['cpun']);
-		if (isset($options['cppw']) && $options['cppw'] != '') $cppw_value = urldecode(dt_cpanel_crypt($options['cppw']));
+		//if (isset($options['cppw']) && $options['cppw'] != '') $cppw_value = urldecode(dt_cpanel_crypt($options['cppw']));
 		if (isset($dt_cpanel_domains)) 
 			$show_array = $dt_cpanel_domains['show_array'];
 		else
@@ -514,7 +528,7 @@ function dt_cpanel_settings_page() {
 			}
 		}
 		$html = "<BR><hr><BR><h2>cPanel Login Information</h2><table><tr><td>cPanel Username:</td><td><input type='text' name='cpun' value='".$cpun_value."'></td></tr>
-			<tr><td>cPanel Password:</td><td><input type='password' name='cppw' value='".$cppw_value."'></td></tr>
+			<tr><td>cPanel Password:</td><td><input type='password' name='cppw'></td></tr>
 			</table><input type=hidden name=settings_update value=1>";
 	        echo $html;
 	        wp_nonce_field( 'settings_update_nonce', 'settings_update_nonce' );
