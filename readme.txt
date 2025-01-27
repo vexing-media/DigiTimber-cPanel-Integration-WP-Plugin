@@ -1,10 +1,10 @@
 === DigiTimber cPanel Integration ===
 Contributors: digitimber
 Tags: cPanel, email, mail, manage
-Requires PHP: 7.1
-Requires at least: 5.0
-Tested up to: 5.5.3
-Stable tag: 1.4.6
+Requires PHP: 7.2
+Requires at least: 6.0
+Tested up to: 6.7.1
+Stable tag: 1.4.8
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 == Description ==
@@ -63,7 +63,10 @@ Not at this time.
 While we don't offer any offical support for this plugin, please email plugin@digitimber.com or post to the WordPress support forum and we will attempt to assist to the best of our abilities. 
 
 == Changelog ==
-= 1.4.6 = 1/24/2020 
+= 1.4.8 = 1/27/2025 
+- SECURITY UPDATE: XSS/CSRF reported and resolved. 
+
+= 1.4.6-7 = 1/24/2020 
 - BUGFIX (Issue#12): The plugin generated 1 character of unexpected output during activation... - Removed erronious newline at top of file causing output
 
 = 1.4.5 = 12/6/2020 
